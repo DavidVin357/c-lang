@@ -457,19 +457,6 @@ public class CParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class MultiplicationContext extends ExpressionContext {
-		public ExpressionContext left;
-		public Token operator;
-		public ExpressionContext right;
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
-		public TerminalNode MUL() { return getToken(CParser.MUL, 0); }
-		public MultiplicationContext(ExpressionContext ctx) { copyFrom(ctx); }
-	}
 	public static class AdditionContext extends ExpressionContext {
 		public ExpressionContext left;
 		public Token operator;
@@ -482,6 +469,19 @@ public class CParser extends Parser {
 		}
 		public TerminalNode ADD() { return getToken(CParser.ADD, 0); }
 		public AdditionContext(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class MultiplicationContext extends ExpressionContext {
+		public ExpressionContext left;
+		public Token operator;
+		public ExpressionContext right;
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public TerminalNode MUL() { return getToken(CParser.MUL, 0); }
+		public MultiplicationContext(ExpressionContext ctx) { copyFrom(ctx); }
 	}
 	public static class LessEqualContext extends ExpressionContext {
 		public ExpressionContext left;
@@ -722,54 +722,54 @@ public class CParser extends Parser {
 					switch ( getInterpreter().adaptivePredict(_input,3,_ctx) ) {
 					case 1:
 						{
-						_localctx = new MultiplicationContext(new ExpressionContext(_parentctx, _parentState));
-						((MultiplicationContext)_localctx).left = _prevctx;
+						_localctx = new AdditionContext(new ExpressionContext(_parentctx, _parentState));
+						((AdditionContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(64);
 						if (!(precpred(_ctx, 13))) throw new FailedPredicateException(this, "precpred(_ctx, 13)");
 						setState(65);
-						((MultiplicationContext)_localctx).operator = match(MUL);
+						((AdditionContext)_localctx).operator = match(ADD);
 						setState(66);
-						((MultiplicationContext)_localctx).right = expression(14);
+						((AdditionContext)_localctx).right = expression(14);
 						}
 						break;
 					case 2:
 						{
-						_localctx = new DivisionContext(new ExpressionContext(_parentctx, _parentState));
-						((DivisionContext)_localctx).left = _prevctx;
+						_localctx = new SubtractionContext(new ExpressionContext(_parentctx, _parentState));
+						((SubtractionContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(67);
 						if (!(precpred(_ctx, 12))) throw new FailedPredicateException(this, "precpred(_ctx, 12)");
 						setState(68);
-						((DivisionContext)_localctx).operator = match(DIV);
+						((SubtractionContext)_localctx).operator = match(SUB);
 						setState(69);
-						((DivisionContext)_localctx).right = expression(13);
+						((SubtractionContext)_localctx).right = expression(13);
 						}
 						break;
 					case 3:
 						{
-						_localctx = new AdditionContext(new ExpressionContext(_parentctx, _parentState));
-						((AdditionContext)_localctx).left = _prevctx;
+						_localctx = new MultiplicationContext(new ExpressionContext(_parentctx, _parentState));
+						((MultiplicationContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(70);
 						if (!(precpred(_ctx, 11))) throw new FailedPredicateException(this, "precpred(_ctx, 11)");
 						setState(71);
-						((AdditionContext)_localctx).operator = match(ADD);
+						((MultiplicationContext)_localctx).operator = match(MUL);
 						setState(72);
-						((AdditionContext)_localctx).right = expression(12);
+						((MultiplicationContext)_localctx).right = expression(12);
 						}
 						break;
 					case 4:
 						{
-						_localctx = new SubtractionContext(new ExpressionContext(_parentctx, _parentState));
-						((SubtractionContext)_localctx).left = _prevctx;
+						_localctx = new DivisionContext(new ExpressionContext(_parentctx, _parentState));
+						((DivisionContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(73);
 						if (!(precpred(_ctx, 10))) throw new FailedPredicateException(this, "precpred(_ctx, 10)");
 						setState(74);
-						((SubtractionContext)_localctx).operator = match(SUB);
+						((DivisionContext)_localctx).operator = match(DIV);
 						setState(75);
-						((SubtractionContext)_localctx).right = expression(11);
+						((DivisionContext)_localctx).right = expression(11);
 						}
 						break;
 					case 5:
@@ -1096,8 +1096,8 @@ public class CParser extends Parser {
 		"\5\16\b\2\65\66\5\22\n\2\66\21\3\2\2\2\678\b\n\1\28A\7+\2\29A\7,\2\2:"+
 		"A\7-\2\2;<\7\33\2\2<=\5\22\n\2=>\7\34\2\2>A\3\2\2\2?A\5\20\t\2@\67\3\2"+
 		"\2\2@9\3\2\2\2@:\3\2\2\2@;\3\2\2\2@?\3\2\2\2Ah\3\2\2\2BC\f\17\2\2CD\7"+
-		"\35\2\2Dg\5\22\n\20EF\f\16\2\2FG\7\36\2\2Gg\5\22\n\17HI\f\r\2\2IJ\7\37"+
-		"\2\2Jg\5\22\n\16KL\f\f\2\2LM\7 \2\2Mg\5\22\n\rNO\f\13\2\2OP\7!\2\2Pg\5"+
+		"\37\2\2Dg\5\22\n\20EF\f\16\2\2FG\7 \2\2Gg\5\22\n\17HI\f\r\2\2IJ\7\35\2"+
+		"\2Jg\5\22\n\16KL\f\f\2\2LM\7\36\2\2Mg\5\22\n\rNO\f\13\2\2OP\7!\2\2Pg\5"+
 		"\22\n\fQR\f\n\2\2RS\7$\2\2Sg\5\22\n\13TU\f\t\2\2UV\7\'\2\2Vg\5\22\n\n"+
 		"WX\f\b\2\2XY\7(\2\2Yg\5\22\n\tZ[\f\7\2\2[\\\7%\2\2\\g\5\22\n\b]^\f\6\2"+
 		"\2^_\7&\2\2_g\5\22\n\7`a\f\5\2\2ab\7\"\2\2bg\5\22\n\6cd\f\4\2\2de\7#\2"+

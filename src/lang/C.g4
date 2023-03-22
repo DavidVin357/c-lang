@@ -90,10 +90,10 @@ expression
    | FRACTION                                                   # Fraction
    | Identifier                                                 # Identifier
    | '(' inner=expression ')'                                   # Parentheses
-   | left=expression operator=MUL right=expression              # Multiplication
-   | left=expression operator=DIV right=expression              # Division
    | left=expression operator=ADD right=expression              # Addition
    | left=expression operator=SUB right=expression              # Subtraction
+   | left=expression operator=MUL right=expression              # Multiplication
+   | left=expression operator=DIV right=expression              # Division
    | left=expression operator=MOD right=expression              # Modular
    | left=expression operator=EQUALS right=expression           # Equal
    | left=expression operator=GREATER right=expression          # Greater
