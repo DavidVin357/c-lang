@@ -1,0 +1,17 @@
+{
+  "name": "C-Lang",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "antlr4ts": "^0.5.0-alpha.4",
+    "typescript": "^5.0.2"
+  },
+  "devDependencies": {
+    "antlr4ts-cli": "^0.5.0-alpha.4"
+  },
+  "scripts": {
+    "antlr4ts": "antlr4ts -visitor ./src/lang/C.g4",
+    "build": "yarn tsc --build --force"
+  }
+}
