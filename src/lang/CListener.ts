@@ -1,4 +1,4 @@
-// Generated from ./src/lang/C.g4 by ANTLR 4.9.0-SNAPSHOT
+// Generated from C.g4 by ANTLR 4.9.0-SNAPSHOT
 
 
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
@@ -7,10 +7,10 @@ import { DecimalContext } from "./CParser";
 import { FractionContext } from "./CParser";
 import { IdentifierContext } from "./CParser";
 import { ParenthesesContext } from "./CParser";
-import { MultiplicationContext } from "./CParser";
-import { DivisionContext } from "./CParser";
 import { AdditionContext } from "./CParser";
 import { SubtractionContext } from "./CParser";
+import { MultiplicationContext } from "./CParser";
+import { DivisionContext } from "./CParser";
 import { ModularContext } from "./CParser";
 import { EqualContext } from "./CParser";
 import { GreaterContext } from "./CParser";
@@ -30,8 +30,9 @@ import { AssignmentOperatorContext } from "./CParser";
 import { AssignmentContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
-import { BlockItemContext } from "./CParser";
-import { BlockItemListContext } from "./CParser";
+import { ConditionalStatementContext } from "./CParser";
+import { CompoundStatementContext } from "./CParser";
+import { StatementContext } from "./CParser";
 import { ProgramContext } from "./CParser";
 
 
@@ -93,32 +94,6 @@ export interface CListener extends ParseTreeListener {
 	exitParentheses?: (ctx: ParenthesesContext) => void;
 
 	/**
-	 * Enter a parse tree produced by the `Multiplication`
-	 * labeled alternative in `CParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterMultiplication?: (ctx: MultiplicationContext) => void;
-	/**
-	 * Exit a parse tree produced by the `Multiplication`
-	 * labeled alternative in `CParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitMultiplication?: (ctx: MultiplicationContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `Division`
-	 * labeled alternative in `CParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterDivision?: (ctx: DivisionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `Division`
-	 * labeled alternative in `CParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitDivision?: (ctx: DivisionContext) => void;
-
-	/**
 	 * Enter a parse tree produced by the `Addition`
 	 * labeled alternative in `CParser.expression`.
 	 * @param ctx the parse tree
@@ -143,6 +118,32 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitSubtraction?: (ctx: SubtractionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `Multiplication`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterMultiplication?: (ctx: MultiplicationContext) => void;
+	/**
+	 * Exit a parse tree produced by the `Multiplication`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitMultiplication?: (ctx: MultiplicationContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `Division`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterDivision?: (ctx: DivisionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `Division`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitDivision?: (ctx: DivisionContext) => void;
 
 	/**
 	 * Enter a parse tree produced by the `Modular`
@@ -372,26 +373,37 @@ export interface CListener extends ParseTreeListener {
 	exitExpressionStatement?: (ctx: ExpressionStatementContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `CParser.blockItem`.
+	 * Enter a parse tree produced by `CParser.conditionalStatement`.
 	 * @param ctx the parse tree
 	 */
-	enterBlockItem?: (ctx: BlockItemContext) => void;
+	enterConditionalStatement?: (ctx: ConditionalStatementContext) => void;
 	/**
-	 * Exit a parse tree produced by `CParser.blockItem`.
+	 * Exit a parse tree produced by `CParser.conditionalStatement`.
 	 * @param ctx the parse tree
 	 */
-	exitBlockItem?: (ctx: BlockItemContext) => void;
+	exitConditionalStatement?: (ctx: ConditionalStatementContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `CParser.blockItemList`.
+	 * Enter a parse tree produced by `CParser.compoundStatement`.
 	 * @param ctx the parse tree
 	 */
-	enterBlockItemList?: (ctx: BlockItemListContext) => void;
+	enterCompoundStatement?: (ctx: CompoundStatementContext) => void;
 	/**
-	 * Exit a parse tree produced by `CParser.blockItemList`.
+	 * Exit a parse tree produced by `CParser.compoundStatement`.
 	 * @param ctx the parse tree
 	 */
-	exitBlockItemList?: (ctx: BlockItemListContext) => void;
+	exitCompoundStatement?: (ctx: CompoundStatementContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.statement`.
+	 * @param ctx the parse tree
+	 */
+	enterStatement?: (ctx: StatementContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.statement`.
+	 * @param ctx the parse tree
+	 */
+	exitStatement?: (ctx: StatementContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.program`.

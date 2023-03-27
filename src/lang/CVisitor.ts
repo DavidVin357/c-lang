@@ -1,4 +1,4 @@
-// Generated from ./src/lang/C.g4 by ANTLR 4.9.0-SNAPSHOT
+// Generated from C.g4 by ANTLR 4.9.0-SNAPSHOT
 
 
 import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
@@ -7,10 +7,10 @@ import { DecimalContext } from "./CParser";
 import { FractionContext } from "./CParser";
 import { IdentifierContext } from "./CParser";
 import { ParenthesesContext } from "./CParser";
-import { MultiplicationContext } from "./CParser";
-import { DivisionContext } from "./CParser";
 import { AdditionContext } from "./CParser";
 import { SubtractionContext } from "./CParser";
+import { MultiplicationContext } from "./CParser";
+import { DivisionContext } from "./CParser";
 import { ModularContext } from "./CParser";
 import { EqualContext } from "./CParser";
 import { GreaterContext } from "./CParser";
@@ -30,8 +30,9 @@ import { AssignmentOperatorContext } from "./CParser";
 import { AssignmentContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
-import { BlockItemContext } from "./CParser";
-import { BlockItemListContext } from "./CParser";
+import { ConditionalStatementContext } from "./CParser";
+import { CompoundStatementContext } from "./CParser";
+import { StatementContext } from "./CParser";
 import { ProgramContext } from "./CParser";
 
 
@@ -76,22 +77,6 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitParentheses?: (ctx: ParenthesesContext) => Result;
 
 	/**
-	 * Visit a parse tree produced by the `Multiplication`
-	 * labeled alternative in `CParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitMultiplication?: (ctx: MultiplicationContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by the `Division`
-	 * labeled alternative in `CParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitDivision?: (ctx: DivisionContext) => Result;
-
-	/**
 	 * Visit a parse tree produced by the `Addition`
 	 * labeled alternative in `CParser.expression`.
 	 * @param ctx the parse tree
@@ -106,6 +91,22 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitSubtraction?: (ctx: SubtractionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `Multiplication`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitMultiplication?: (ctx: MultiplicationContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `Division`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitDivision?: (ctx: DivisionContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by the `Modular`
@@ -250,18 +251,25 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitExpressionStatement?: (ctx: ExpressionStatementContext) => Result;
 
 	/**
-	 * Visit a parse tree produced by `CParser.blockItem`.
+	 * Visit a parse tree produced by `CParser.conditionalStatement`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitBlockItem?: (ctx: BlockItemContext) => Result;
+	visitConditionalStatement?: (ctx: ConditionalStatementContext) => Result;
 
 	/**
-	 * Visit a parse tree produced by `CParser.blockItemList`.
+	 * Visit a parse tree produced by `CParser.compoundStatement`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitBlockItemList?: (ctx: BlockItemListContext) => Result;
+	visitCompoundStatement?: (ctx: CompoundStatementContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.statement`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitStatement?: (ctx: StatementContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `CParser.program`.

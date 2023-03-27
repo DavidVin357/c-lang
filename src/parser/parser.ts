@@ -2,7 +2,7 @@ import { CLexer } from '../lang/CLexer'
 
 import {
   AdditionContext,
-  AssignmentContext,
+  AssignmentContext, CompoundStatementContext, ConditionalStatementContext,
   CParser,
   DecimalContext,
   DeclarationContext,
@@ -234,6 +234,7 @@ class TypeGenerator implements CVisitor<cTree.Type> {
 
 class StatementGenerator implements CVisitor<cTree.Statement> {
   visitDeclaration(ctx: DeclarationContext): cTree.VariableDeclaration {
+    console.log("VISITING DECLARATION")
     const typeGenerator = new TypeGenerator()
     return {
       type: 'VariableDeclaration',
@@ -255,15 +256,40 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
+  visitConditionalStatement(ctx: ConditionalStatementContext): cTree.ConditionalStatement {
+    console.log("VISITING CONDITIONAL STATEMENT")
+    const statementGen = new StatementGenerator()
+    const falsebody = ctx._falsebody ? statementGen.visit(ctx._falsebody) : null;
+    return {
+      type: 'ConditionalStatement',
+      condition: new ExpressionGenerator().visit(ctx._condition),
+      truebody: statementGen.visit(ctx._truebody),
+      falsebody: falsebody,
+    }
+  }
+
+  visitCompoundStatement(ctx: CompoundStatementContext): cTree.CompoundStatement {
+    console.log('VISITING COMPOUND STATEMENT')
+    return {
+      type: "CompoundStatement",
+      statements: new StatementGenerator().visitChildren(ctx._statements),
+      //new StatementGenerator().visit(ctx._statements)
+    }
+  }
+
+
   visit(tree: ParseTree): cTree.Statement {
     return tree.accept(this)
   }
 
-  visitChildren(node: RuleNode): cTree.Statement {
+  visitChildren(node: RuleNode): cTree.SequenceStatement {
     const statements: cTree.Statement[] = []
-    if (node.childCount == 1) {
-      return this.visit(node.getChild(0))
-    }
+    // if (node.childCount == 1) {
+    //   return this.visit(node.getChild(0)) {
+    //     type: 'SequenceStatement',
+    //     this.visit(node.getChild(0)),
+    //   }
+    // }
     for (let i = 0; i < node.childCount; i++) {
       statements.push(node.getChild(i).accept(this))
     }

@@ -106,10 +106,24 @@ export type ExpressionStatement = {
   expression: Expression
 }
 
+export type ConditionalStatement = {
+  type: 'ConditionalStatement'
+  condition: Expression
+  truebody: Statement
+  falsebody: Statement | null
+}
+
+export type CompoundStatement = {
+  type: 'CompoundStatement'
+  statements: SequenceStatement
+}
+
 export interface StatementMap {
   VariableDeclaration: VariableDeclaration
   ExpressionStatement: ExpressionStatement
   SequenceStatement: SequenceStatement
+  ConditionalStatement: ConditionalStatement
+  CompoundStatement: CompoundStatement
 }
 
 export type Statement = StatementMap[keyof StatementMap]

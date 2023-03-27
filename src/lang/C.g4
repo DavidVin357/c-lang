@@ -108,12 +108,21 @@ expression
 expressionStatement
     :   expression ';'
     ;
+
+conditionalStatement
+    :   'if' '(' condition=expression ')' truebody=statement ('else' falsebody=statement)?
+    ;
+
+compoundStatement
+    :   '{' statements=statement? '}'
+    ;
     
 statement
     :   expressionStatement
     |   declaration
+    |   conditionalStatement
+    |   compoundStatement
     ;
-    
 
 program 
     : statement+;
