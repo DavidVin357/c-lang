@@ -1,27 +1,26 @@
 import { CLexer } from '../lang/CLexer'
 
 import {
-  AdditionContext,
+  AdditiveContext,
   AssignmentContext,
+  CompoundStatementContext,
   CParser,
   DecimalContext,
   DeclarationContext,
-  DivisionContext,
-  EqualContext,
+  DeclaratorContext,
+  EqualityContext,
   ExpressionContext,
   ExpressionStatementContext,
   FractionContext,
-  GreaterContext,
-  GreaterEqualContext,
+  FunctionDeclarationContext,
   IdentifierContext,
-  LessContext,
-  LessEqualContext,
+  InitializationContext,
   LogicalAndContext,
   LogicalOrContext,
-  ModularContext,
-  MultiplicationContext,
+  MultiplicativeContext,
+  ParameterDeclarationContext,
   ProgramContext,
-  SubtractionContext,
+  RelationalContext,
   TypeQualifierContext,
   TypeSpecifierContext,
 } from '../lang/CParser'
@@ -58,96 +57,48 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitAddition(ctx: AdditionContext): cTree.Expression {
+  visitDeclarator(ctx: DeclaratorContext): cTree.Declarator {
+    const name = ctx.text.replace('*', '')
+    return {
+      type: ctx.text.startsWith('*') ? 'Pointer' : 'Identifier',
+      name,
+    }
+  }
+
+  visitAdditive(ctx: AdditiveContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
-      operator: '+',
+      operator: ctx._operator.text,
       left: this.visit(ctx._left),
       right: this.visit(ctx._right),
     }
   }
 
-  visitSubtraction(ctx: SubtractionContext): cTree.Expression {
+  visitMultiplicative(ctx: MultiplicativeContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
-      operator: '-',
+      operator: ctx._operator.text,
+      left: this.visit(ctx._left),
+      right: this.visit(ctx._right),
+    }
+  }
+  visitEqual(ctx: EqualityContext): cTree.Expression {
+    return {
+      type: 'BinaryExpression',
+      operator: ctx._operator.text,
       left: this.visit(ctx._left),
       right: this.visit(ctx._right),
     }
   }
 
-  visitMultiplication(ctx: MultiplicationContext): cTree.Expression {
+  visitGreater(ctx: RelationalContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
-      operator: '*',
+      operator: ctx._operator.text,
       left: this.visit(ctx._left),
       right: this.visit(ctx._right),
     }
   }
-
-  visitDivision(ctx: DivisionContext): cTree.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '/',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-    }
-  }
-
-  visitModular(ctx: ModularContext): cTree.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '%',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-    }
-  }
-
-  visitEqual(ctx: EqualContext): cTree.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '==',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-    }
-  }
-
-  visitGreater(ctx: GreaterContext): cTree.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '>',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-    }
-  }
-
-  visitGreaterEqual(ctx: GreaterEqualContext): cTree.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '>=',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-    }
-  }
-
-  visitLess(ctx: LessContext): cTree.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '<',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-    }
-  }
-
-  visitLessEqual(ctx: LessEqualContext): cTree.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '<=',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-    }
-  }
-
   visitLogicalAnd(ctx: LogicalAndContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
@@ -215,15 +166,21 @@ class TypeGenerator implements CVisitor<cTree.Type> {
   }
   visitChildren(node: RuleNode): cTree.SequenceType {
     const types: cTree.Type[] = []
-    for (let i = 0; i < node.childCount; i++) {
-      types.push(node.getChild(i).accept(this))
+    if (node.childCount == 1) {
+      types.push(this.visit(node.getChild(0)))
+    } else {
+      for (let i = 0; i < node.childCount; i++) {
+        types.push(node.getChild(i).accept(this))
+      }
     }
+
     return {
       type: 'SequenceType',
       value: types,
     }
   }
   visitTerminal(node: TerminalNode): cTree.Type {
+    console.log(node.text)
     return node.accept(this)
   }
 
@@ -233,19 +190,69 @@ class TypeGenerator implements CVisitor<cTree.Type> {
 }
 
 class StatementGenerator implements CVisitor<cTree.Statement> {
+  typeGenerator = new TypeGenerator()
+  expressionGenerator = new ExpressionGenerator()
+
   visitDeclaration(ctx: DeclarationContext): cTree.VariableDeclaration {
-    const typeGenerator = new TypeGenerator()
     return {
       type: 'VariableDeclaration',
-      typeSequence: typeGenerator.visitChildren(ctx._specifiers),
-      identifier: {
-        type: 'Identifier',
-        name: ctx.Identifier().text,
-      },
-      value: new ExpressionGenerator().visit(ctx._value),
+      typeSequence: this.typeGenerator.visitChildren(ctx._specifiers),
+      declarator: this.expressionGenerator.visitDeclarator(ctx.declarator()),
     }
   }
 
+  visitInitialization(
+    ctx: InitializationContext
+  ): cTree.VariableInitialization {
+    return {
+      type: 'VariableInitialization',
+      typeSequence: this.typeGenerator.visitChildren(ctx._specifiers),
+      declarator: this.expressionGenerator.visitDeclarator(ctx.declarator()),
+      value: this.typeGenerator.visit(ctx._value),
+    }
+  }
+
+  visitParameterDeclaration(
+    ctx: ParameterDeclarationContext
+  ): cTree.ParameterDeclaration {
+    return {
+      type: 'ParameterDeclaration',
+      typeSequence: this.typeGenerator.visitChildren(
+        ctx.declarationSpecifiers()
+      ),
+      name: ctx.declarator().text,
+    }
+  }
+  visitCompoundStatement(ctx: CompoundStatementContext): cTree.Statement {
+    const childStatements = ctx.blockItemList()?.children
+    return {
+      type: 'SequenceStatement',
+      statements: childStatements
+        ? childStatements?.map((child) => child.accept(this))
+        : [],
+    }
+  }
+
+  visitFunctionDeclaration(
+    ctx: FunctionDeclarationContext
+  ): cTree.FunctionDeclaration {
+    const name = ctx.Identifier().text
+    console.log('name', name)
+
+    const body = this.visit(ctx.compoundStatement())
+    console.log('body', body)
+
+    const params = ctx.parameterList().children
+    const args = params ? params.map((child) => child.accept(this)) : []
+    console.log('args', JSON.stringify(args, null, 2))
+
+    return {
+      type: 'FunctionDeclaration',
+      name,
+      body,
+      args,
+    }
+  }
   visitExpressionStatement(
     ctx: ExpressionStatementContext
   ): cTree.ExpressionStatement {
@@ -290,7 +297,6 @@ function convertProgram(program: ProgramContext): cTree.Program {
   const generator = new StatementGenerator()
   const children = program.children
   const body = children?.map((child) => child.accept(generator))
-  console.log('body', JSON.stringify(body, null, 2))
   return {
     type: 'Program',
     body: body || [],

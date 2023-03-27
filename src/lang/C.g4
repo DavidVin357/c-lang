@@ -11,6 +11,7 @@ MOD: '%';
 LOGICAL_AND: '&&';
 LOGICAL_OR: '||';
 EQUALS: '==';
+NOT_EQUALS: '!=';
 LESS : '<';
 LESS_EQUAL : '<=';
 GREATER : '>';
@@ -40,18 +41,21 @@ Fraction
     ;
 
 declarationSpecifiers
-    : declarationSpecifier+;
+    : (typeQualifier | typeSpecifier)+;
 
 typeSpecifier
     :   'void'
     |   'char'
+    |   'unsigned char'
     |   'short'
+    |   'unsigned short'
     |   'int'
+    |   'unsigned int'
     |   'long'
+    |   'unsigned long'
     |   'float'
     |   'double'
-    |   'signed'
-    |   'unsigned';
+    ;
 
 typeQualifier
     :   'const'
@@ -68,13 +72,21 @@ Identifier
         |   Digit
         )*
     ;
-
-declaration
-    : specifiers=declarationSpecifiers Identifier '=' value=expression ';'
+Pointer
+    :   '*' 
+        Nondigit
+        (   Nondigit
+        |   Digit
+        )*
     ;
+declarator : Pointer | Identifier;
 
 initialization
-    : specifiers=declarationSpecifiers Identifier ';'
+    : specifiers=declarationSpecifiers declarator '=' value=expression ';'
+    ;
+
+declaration
+    : specifiers=declarationSpecifiers declarator ';'
     ;
 
 assignmentOperator
@@ -85,21 +97,17 @@ assignment
     : Identifier operator=assignmentOperator value=expression;
 
 
+
 expression
    : DECIMAL                                                    # Decimal
    | FRACTION                                                   # Fraction
    | Identifier                                                 # Identifier
+   | functionApplication                                        # Application
    | '(' inner=expression ')'                                   # Parentheses
-   | left=expression operator=ADD right=expression              # Addition
-   | left=expression operator=SUB right=expression              # Subtraction
-   | left=expression operator=MUL right=expression              # Multiplication
-   | left=expression operator=DIV right=expression              # Division
-   | left=expression operator=MOD right=expression              # Modular
-   | left=expression operator=EQUALS right=expression           # Equal
-   | left=expression operator=GREATER right=expression          # Greater
-   | left=expression operator=GREATER_EQUAL right=expression    # GreaterEqual
-   | left=expression operator=LESS right=expression             # Less 
-   | left=expression operator=LESS_EQUAL right=expression       # LessEqual
+   | left=expression operator=(ADD | SUB) right=expression      # Additive
+   | left=expression operator=(MUL | DIV | MOD ) right=expression  # Multiplicative
+   | left=expression operator=(GREATER | GREATER_EQUAL | LESS | LESS_EQUAL) right=expression # Relational	
+   | left=expression operator=(EQUALS | NOT_EQUALS) right=expression  # Equality		
    | left=expression operator=LOGICAL_AND right=expression      # LogicalAnd
    | left=expression operator=LOGICAL_OR right=expression       # LogicalOr
    | assignment                                                 # AssignmentExpression
@@ -112,8 +120,32 @@ expressionStatement
 statement
     :   expressionStatement
     |   declaration
+    |   initialization
+    |   functionDeclaration
+    ;
+
+blockItemList
+    :   statement+
+    ;
+
+compoundStatement
+    :   '{' blockItemList? '}'
+    ;
+
+parameterDeclaration
+    :   declarationSpecifiers declarator
     ;
     
+parameterList
+    :   parameterDeclaration (',' parameterDeclaration)*
+    ;
+
+functionDeclaration
+    :   declarationSpecifiers? Identifier '(' parameterList ')' compoundStatement
+    ;
+functionApplication
+    : Identifier '(' (declarator | DECIMAL | FRACTION) ')' ':'
+    ;
 
 program 
     : statement+;

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "module": "commonjs",
+    "module": "NodeNext",
     "declaration": true,
     "target": "es2016",
     "lib": ["es2021.string", "es2018", "es2017.object", "dom"],
@@ -20,12 +20,9 @@
     "noUnusedLocals": false,
     "incremental": true
   },
-  "exclude": [
-    "src/stdlib/metacircular-interpreter",
-    "src/stdlib/**/*.js",
-    "node_modules",
-    "dist",
-    "sicp_publish"
-  ],
-  "types": ["typePatches", "jest"]
+  "exclude": ["node_modules", "dist"],
+  "types": ["typePatches", "jest"],
+  "ts-node": {
+    "swc": true
+  }
 }
