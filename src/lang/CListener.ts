@@ -6,6 +6,7 @@ import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 import { DecimalContext } from "./CParser";
 import { FractionContext } from "./CParser";
 import { IdentifierContext } from "./CParser";
+import { PointerContext } from "./CParser";
 import { ApplicationContext } from "./CParser";
 import { ParenthesesContext } from "./CParser";
 import { AdditiveContext } from "./CParser";
@@ -14,10 +15,11 @@ import { RelationalContext } from "./CParser";
 import { EqualityContext } from "./CParser";
 import { LogicalAndContext } from "./CParser";
 import { LogicalOrContext } from "./CParser";
+import { VarAddressContext } from "./CParser";
 import { AssignmentExpressionContext } from "./CParser";
-import { DeclarationSpecifiersContext } from "./CParser";
 import { TypeSpecifierContext } from "./CParser";
 import { TypeQualifierContext } from "./CParser";
+import { TypeQualifiersContext } from "./CParser";
 import { DeclarationSpecifierContext } from "./CParser";
 import { DeclaratorContext } from "./CParser";
 import { InitializationContext } from "./CParser";
@@ -32,6 +34,7 @@ import { CompoundStatementContext } from "./CParser";
 import { ParameterDeclarationContext } from "./CParser";
 import { ParameterListContext } from "./CParser";
 import { FunctionDeclarationContext } from "./CParser";
+import { ArgumentExpressionListContext } from "./CParser";
 import { FunctionApplicationContext } from "./CParser";
 import { ProgramContext } from "./CParser";
 
@@ -79,6 +82,19 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitIdentifier?: (ctx: IdentifierContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `Pointer`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterPointer?: (ctx: PointerContext) => void;
+	/**
+	 * Exit a parse tree produced by the `Pointer`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitPointer?: (ctx: PointerContext) => void;
 
 	/**
 	 * Enter a parse tree produced by the `Application`
@@ -185,6 +201,19 @@ export interface CListener extends ParseTreeListener {
 	exitLogicalOr?: (ctx: LogicalOrContext) => void;
 
 	/**
+	 * Enter a parse tree produced by the `VarAddress`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterVarAddress?: (ctx: VarAddressContext) => void;
+	/**
+	 * Exit a parse tree produced by the `VarAddress`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitVarAddress?: (ctx: VarAddressContext) => void;
+
+	/**
 	 * Enter a parse tree produced by the `AssignmentExpression`
 	 * labeled alternative in `CParser.expression`.
 	 * @param ctx the parse tree
@@ -196,17 +225,6 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitAssignmentExpression?: (ctx: AssignmentExpressionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by `CParser.declarationSpecifiers`.
-	 * @param ctx the parse tree
-	 */
-	enterDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => void;
-	/**
-	 * Exit a parse tree produced by `CParser.declarationSpecifiers`.
-	 * @param ctx the parse tree
-	 */
-	exitDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.typeSpecifier`.
@@ -229,6 +247,17 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitTypeQualifier?: (ctx: TypeQualifierContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.typeQualifiers`.
+	 * @param ctx the parse tree
+	 */
+	enterTypeQualifiers?: (ctx: TypeQualifiersContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.typeQualifiers`.
+	 * @param ctx the parse tree
+	 */
+	exitTypeQualifiers?: (ctx: TypeQualifiersContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.declarationSpecifier`.
@@ -383,6 +412,17 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitFunctionDeclaration?: (ctx: FunctionDeclarationContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.argumentExpressionList`.
+	 * @param ctx the parse tree
+	 */
+	enterArgumentExpressionList?: (ctx: ArgumentExpressionListContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.argumentExpressionList`.
+	 * @param ctx the parse tree
+	 */
+	exitArgumentExpressionList?: (ctx: ArgumentExpressionListContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.functionApplication`.

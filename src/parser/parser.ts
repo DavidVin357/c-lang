@@ -7,11 +7,13 @@ import {
   CParser,
   DecimalContext,
   DeclarationContext,
+  DeclarationSpecifierContext,
   DeclaratorContext,
   EqualityContext,
   ExpressionContext,
   ExpressionStatementContext,
   FractionContext,
+  FunctionApplicationContext,
   FunctionDeclarationContext,
   IdentifierContext,
   InitializationContext,
@@ -19,10 +21,13 @@ import {
   LogicalOrContext,
   MultiplicativeContext,
   ParameterDeclarationContext,
+  ParameterListContext,
+  PointerContext,
   ProgramContext,
   RelationalContext,
   TypeQualifierContext,
   TypeSpecifierContext,
+  VarAddressContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -56,7 +61,12 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       name: ctx.text,
     }
   }
-
+  visitPointer(ctx: PointerContext): cTree.Pointer {
+    return {
+      type: 'Pointer',
+      name: ctx.text,
+    }
+  }
   visitDeclarator(ctx: DeclaratorContext): cTree.Declarator {
     const name = ctx.text.replace('*', '')
     return {
@@ -114,6 +124,13 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       operator: '||',
       left: this.visit(ctx._left),
       right: this.visit(ctx._right),
+    }
+  }
+
+  visitVarAddress(ctx: VarAddressContext): cTree.VariableAddress {
+    return {
+      type: 'VariableAddress',
+      name: ctx.Identifier().text,
     }
   }
 
@@ -196,7 +213,8 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   visitDeclaration(ctx: DeclarationContext): cTree.VariableDeclaration {
     return {
       type: 'VariableDeclaration',
-      typeSequence: this.typeGenerator.visitChildren(ctx._specifiers),
+      typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
+      typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
       declarator: this.expressionGenerator.visitDeclarator(ctx.declarator()),
     }
   }
@@ -206,29 +224,31 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   ): cTree.VariableInitialization {
     return {
       type: 'VariableInitialization',
-      typeSequence: this.typeGenerator.visitChildren(ctx._specifiers),
+      typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
+      typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
       declarator: this.expressionGenerator.visitDeclarator(ctx.declarator()),
-      value: this.typeGenerator.visit(ctx._value),
+      value: this.expressionGenerator.visit(ctx._value),
     }
   }
-
   visitParameterDeclaration(
     ctx: ParameterDeclarationContext
   ): cTree.ParameterDeclaration {
     return {
       type: 'ParameterDeclaration',
-      typeSequence: this.typeGenerator.visitChildren(
-        ctx.declarationSpecifiers()
-      ),
-      name: ctx.declarator().text,
+      typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
+      // typeSequence: this.typeGenerator.visitChildren(
+      //   ctx.declarationSpecifiers()
+      // ),
+      declarator: this.expressionGenerator.visitDeclarator(ctx.declarator()),
     }
   }
+
   visitCompoundStatement(ctx: CompoundStatementContext): cTree.Statement {
     const childStatements = ctx.blockItemList()?.children
     return {
       type: 'SequenceStatement',
       statements: childStatements
-        ? childStatements?.map((child) => child.accept(this))
+        ? childStatements.map((child) => this.visit(child))
         : [],
     }
   }
@@ -237,20 +257,40 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     ctx: FunctionDeclarationContext
   ): cTree.FunctionDeclaration {
     const name = ctx.Identifier().text
-    console.log('name', name)
 
     const body = this.visit(ctx.compoundStatement())
-    console.log('body', body)
-
-    const params = ctx.parameterList().children
-    const args = params ? params.map((child) => child.accept(this)) : []
-    console.log('args', JSON.stringify(args, null, 2))
-
+    console.log(JSON.stringify(body, null, 2))
+    const params = ctx.parameterList().children || []
+    const formals = params.reduce((acc: cTree.Statement[], p) => {
+      if (p.text !== ',') {
+        acc.push(p.accept(this))
+      }
+      return acc
+    }, [])
     return {
       type: 'FunctionDeclaration',
       name,
       body,
-      args,
+      formals,
+    }
+  }
+
+  visitFunctionApplication(
+    ctx: FunctionApplicationContext
+  ): cTree.FunctionApplication {
+    const name = ctx.Identifier().text
+
+    const expressionArgs = ctx.argumentExpressionList().children || []
+    console.log('expressionArgs', expressionArgs)
+    return {
+      type: 'FunctionApplication',
+      name,
+      args: expressionArgs.reduce((acc: Array<cTree.Expression>, expr) => {
+        if (expr.text !== ',') {
+          acc.push(this.expressionGenerator.visit(expr))
+        }
+        return acc
+      }, []),
     }
   }
   visitExpressionStatement(

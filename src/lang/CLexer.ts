@@ -47,21 +47,21 @@ export class CLexer extends Lexer {
 	public static readonly T__28 = 29;
 	public static readonly T__29 = 30;
 	public static readonly T__30 = 31;
-	public static readonly T__31 = 32;
-	public static readonly MUL = 33;
-	public static readonly DIV = 34;
-	public static readonly ADD = 35;
-	public static readonly SUB = 36;
-	public static readonly MOD = 37;
-	public static readonly LOGICAL_AND = 38;
-	public static readonly LOGICAL_OR = 39;
-	public static readonly EQUALS = 40;
-	public static readonly NOT_EQUALS = 41;
-	public static readonly LESS = 42;
-	public static readonly LESS_EQUAL = 43;
-	public static readonly GREATER = 44;
-	public static readonly GREATER_EQUAL = 45;
-	public static readonly POSTFIX_ADD = 46;
+	public static readonly MUL = 32;
+	public static readonly DIV = 33;
+	public static readonly ADD = 34;
+	public static readonly SUB = 35;
+	public static readonly MOD = 36;
+	public static readonly LOGICAL_AND = 37;
+	public static readonly LOGICAL_OR = 38;
+	public static readonly EQUALS = 39;
+	public static readonly NOT_EQUALS = 40;
+	public static readonly LESS = 41;
+	public static readonly LESS_EQUAL = 42;
+	public static readonly GREATER = 43;
+	public static readonly GREATER_EQUAL = 44;
+	public static readonly POSTFIX_ADD = 45;
+	public static readonly VAR_ADDRESS = 46;
 	public static readonly WHITESPACE = 47;
 	public static readonly DECIMAL = 48;
 	public static readonly FRACTION = 49;
@@ -82,11 +82,11 @@ export class CLexer extends Lexer {
 		"T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", "T__7", "T__8", 
 		"T__9", "T__10", "T__11", "T__12", "T__13", "T__14", "T__15", "T__16", 
 		"T__17", "T__18", "T__19", "T__20", "T__21", "T__22", "T__23", "T__24", 
-		"T__25", "T__26", "T__27", "T__28", "T__29", "T__30", "T__31", "MUL", 
-		"DIV", "ADD", "SUB", "MOD", "LOGICAL_AND", "LOGICAL_OR", "EQUALS", "NOT_EQUALS", 
-		"LESS", "LESS_EQUAL", "GREATER", "GREATER_EQUAL", "POSTFIX_ADD", "WHITESPACE", 
-		"DECIMAL", "FRACTION", "Nondigit", "Digit", "Fraction", "Identifier", 
-		"Pointer",
+		"T__25", "T__26", "T__27", "T__28", "T__29", "T__30", "MUL", "DIV", "ADD", 
+		"SUB", "MOD", "LOGICAL_AND", "LOGICAL_OR", "EQUALS", "NOT_EQUALS", "LESS", 
+		"LESS_EQUAL", "GREATER", "GREATER_EQUAL", "POSTFIX_ADD", "VAR_ADDRESS", 
+		"WHITESPACE", "DECIMAL", "FRACTION", "Nondigit", "Digit", "Fraction", 
+		"Identifier", "Pointer",
 	];
 
 	private static readonly _LITERAL_NAMES: Array<string | undefined> = [
@@ -94,17 +94,17 @@ export class CLexer extends Lexer {
 		"'int'", "'unsigned int'", "'long'", "'unsigned long'", "'float'", "'double'", 
 		"'const'", "'restrict'", "'volatile'", "'='", "';'", "'*='", "'/='", "'%='", 
 		"'+='", "'-='", "'<<='", "'>>='", "'&='", "'^='", "'|='", "'('", "')'", 
-		"'{'", "'}'", "','", "':'", "'*'", "'/'", "'+'", "'-'", "'%'", "'&&'", 
-		"'||'", "'=='", "'!='", "'<'", "'<='", "'>'", "'>='", "'++'",
+		"'{'", "'}'", "','", "'*'", "'/'", "'+'", "'-'", "'%'", "'&&'", "'||'", 
+		"'=='", "'!='", "'<'", "'<='", "'>'", "'>='", "'++'", "'&'",
 	];
 	private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
 		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
 		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
 		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
 		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, "MUL", "DIV", "ADD", 
-		"SUB", "MOD", "LOGICAL_AND", "LOGICAL_OR", "EQUALS", "NOT_EQUALS", "LESS", 
-		"LESS_EQUAL", "GREATER", "GREATER_EQUAL", "POSTFIX_ADD", "WHITESPACE", 
+		undefined, undefined, undefined, undefined, "MUL", "DIV", "ADD", "SUB", 
+		"MOD", "LOGICAL_AND", "LOGICAL_OR", "EQUALS", "NOT_EQUALS", "LESS", "LESS_EQUAL", 
+		"GREATER", "GREATER_EQUAL", "POSTFIX_ADD", "VAR_ADDRESS", "WHITESPACE", 
 		"DECIMAL", "FRACTION", "Identifier", "Pointer",
 	];
 	public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(CLexer._LITERAL_NAMES, CLexer._SYMBOLIC_NAMES, []);
@@ -165,8 +165,8 @@ export class CLexer extends Lexer {
 		"\x03\x18\x03\x19\x03\x19\x03\x19\x03\x1A\x03\x1A\x03\x1A\x03\x1B\x03\x1B" +
 		"\x03\x1B\x03\x1C\x03\x1C\x03\x1D\x03\x1D\x03\x1E\x03\x1E\x03\x1F\x03\x1F" +
 		"\x03 \x03 \x03!\x03!\x03\"\x03\"\x03#\x03#\x03$\x03$\x03%\x03%\x03&\x03" +
-		"&\x03\'\x03\'\x03\'\x03(\x03(\x03(\x03)\x03)\x03)\x03*\x03*\x03*\x03+" +
-		"\x03+\x03,\x03,\x03,\x03-\x03-\x03.\x03.\x03.\x03/\x03/\x03/\x030\x06" +
+		"&\x03&\x03\'\x03\'\x03\'\x03(\x03(\x03(\x03)\x03)\x03)\x03*\x03*\x03+" +
+		"\x03+\x03+\x03,\x03,\x03-\x03-\x03-\x03.\x03.\x03.\x03/\x03/\x030\x06" +
 		"0\u013A\n0\r0\x0E0\u013B\x030\x030\x031\x061\u0141\n1\r1\x0E1\u0142\x03" +
 		"2\x032\x033\x033\x034\x064\u014A\n4\r4\x0E4\u014B\x035\x055\u014F\n5\x03" +
 		"5\x035\x035\x035\x035\x055\u0156\n5\x036\x036\x036\x076\u015B\n6\f6\x0E" +
@@ -205,10 +205,10 @@ export class CLexer extends Lexer {
 		"\x03\x02\x02\x027\u0109\x03\x02\x02\x029\u010B\x03\x02\x02\x02;\u010D" +
 		"\x03\x02\x02\x02=\u010F\x03\x02\x02\x02?\u0111\x03\x02\x02\x02A\u0113" +
 		"\x03\x02\x02\x02C\u0115\x03\x02\x02\x02E\u0117\x03\x02\x02\x02G\u0119" +
-		"\x03\x02\x02\x02I\u011B\x03\x02\x02\x02K\u011D\x03\x02\x02\x02M\u011F" +
-		"\x03\x02\x02\x02O\u0122\x03\x02\x02\x02Q\u0125\x03\x02\x02\x02S\u0128" +
-		"\x03\x02\x02\x02U\u012B\x03\x02\x02\x02W\u012D\x03\x02\x02\x02Y\u0130" +
-		"\x03\x02\x02\x02[\u0132\x03\x02\x02\x02]\u0135\x03\x02\x02\x02_\u0139" +
+		"\x03\x02\x02\x02I\u011B\x03\x02\x02\x02K\u011D\x03\x02\x02\x02M\u0120" +
+		"\x03\x02\x02\x02O\u0123\x03\x02\x02\x02Q\u0126\x03\x02\x02\x02S\u0129" +
+		"\x03\x02\x02\x02U\u012B\x03\x02\x02\x02W\u012E\x03\x02\x02\x02Y\u0130" +
+		"\x03\x02\x02\x02[\u0133\x03\x02\x02\x02]\u0136\x03\x02\x02\x02_\u0139" +
 		"\x03\x02\x02\x02a\u0140\x03\x02\x02\x02c\u0144\x03\x02\x02\x02e\u0146" +
 		"\x03\x02\x02\x02g\u0149\x03\x02\x02\x02i\u0155\x03\x02\x02\x02k\u0157" +
 		"\x03\x02\x02\x02m\u015F\x03\x02\x02\x02op\x07x\x02\x02pq\x07q\x02\x02" +
@@ -260,19 +260,19 @@ export class CLexer extends Lexer {
 		"\u010A\x07*\x02\x02\u010A8\x03\x02\x02\x02\u010B\u010C\x07+\x02\x02\u010C" +
 		":\x03\x02\x02\x02\u010D\u010E\x07}\x02\x02\u010E<\x03\x02\x02\x02\u010F" +
 		"\u0110\x07\x7F\x02\x02\u0110>\x03\x02\x02\x02\u0111\u0112\x07.\x02\x02" +
-		"\u0112@\x03\x02\x02\x02\u0113\u0114\x07<\x02\x02\u0114B\x03\x02\x02\x02" +
-		"\u0115\u0116\x07,\x02\x02\u0116D\x03\x02\x02\x02\u0117\u0118\x071\x02" +
-		"\x02\u0118F\x03\x02\x02\x02\u0119\u011A\x07-\x02\x02\u011AH\x03\x02\x02" +
-		"\x02\u011B\u011C\x07/\x02\x02\u011CJ\x03\x02\x02\x02\u011D\u011E\x07\'" +
-		"\x02\x02\u011EL\x03\x02\x02\x02\u011F\u0120\x07(\x02\x02\u0120\u0121\x07" +
-		"(\x02\x02\u0121N\x03\x02\x02\x02\u0122\u0123\x07~\x02\x02\u0123\u0124" +
-		"\x07~\x02\x02\u0124P\x03\x02\x02\x02\u0125\u0126\x07?\x02\x02\u0126\u0127" +
-		"\x07?\x02\x02\u0127R\x03\x02\x02\x02\u0128\u0129\x07#\x02\x02\u0129\u012A" +
-		"\x07?\x02\x02\u012AT\x03\x02\x02\x02\u012B\u012C\x07>\x02\x02\u012CV\x03" +
-		"\x02\x02\x02\u012D\u012E\x07>\x02\x02\u012E\u012F\x07?\x02\x02\u012FX" +
-		"\x03\x02\x02\x02\u0130\u0131\x07@\x02\x02\u0131Z\x03\x02\x02\x02\u0132" +
-		"\u0133\x07@\x02\x02\u0133\u0134\x07?\x02\x02\u0134\\\x03\x02\x02\x02\u0135" +
-		"\u0136\x07-\x02\x02\u0136\u0137\x07-\x02\x02\u0137^\x03\x02\x02\x02\u0138" +
+		"\u0112@\x03\x02\x02\x02\u0113\u0114\x07,\x02\x02\u0114B\x03\x02\x02\x02" +
+		"\u0115\u0116\x071\x02\x02\u0116D\x03\x02\x02\x02\u0117\u0118\x07-\x02" +
+		"\x02\u0118F\x03\x02\x02\x02\u0119\u011A\x07/\x02\x02\u011AH\x03\x02\x02" +
+		"\x02\u011B\u011C\x07\'\x02\x02\u011CJ\x03\x02\x02\x02\u011D\u011E\x07" +
+		"(\x02\x02\u011E\u011F\x07(\x02\x02\u011FL\x03\x02\x02\x02\u0120\u0121" +
+		"\x07~\x02\x02\u0121\u0122\x07~\x02\x02\u0122N\x03\x02\x02\x02\u0123\u0124" +
+		"\x07?\x02\x02\u0124\u0125\x07?\x02\x02\u0125P\x03\x02\x02\x02\u0126\u0127" +
+		"\x07#\x02\x02\u0127\u0128\x07?\x02\x02\u0128R\x03\x02\x02\x02\u0129\u012A" +
+		"\x07>\x02\x02\u012AT\x03\x02\x02\x02\u012B\u012C\x07>\x02\x02\u012C\u012D" +
+		"\x07?\x02\x02\u012DV\x03\x02\x02\x02\u012E\u012F\x07@\x02\x02\u012FX\x03" +
+		"\x02\x02\x02\u0130\u0131\x07@\x02\x02\u0131\u0132\x07?\x02\x02\u0132Z" +
+		"\x03\x02\x02\x02\u0133\u0134\x07-\x02\x02\u0134\u0135\x07-\x02\x02\u0135" +
+		"\\\x03\x02\x02\x02\u0136\u0137\x07(\x02\x02\u0137^\x03\x02\x02\x02\u0138" +
 		"\u013A\t\x02\x02\x02\u0139\u0138\x03\x02\x02\x02\u013A\u013B\x03\x02\x02" +
 		"\x02\u013B\u0139\x03\x02\x02\x02\u013B\u013C\x03\x02\x02\x02\u013C\u013D" +
 		"\x03\x02\x02\x02\u013D\u013E\b0\x02\x02\u013E`\x03\x02\x02\x02\u013F\u0141" +

@@ -6,5 +6,5 @@ export function run(code: string) {
 // export default run
 
 // const code = 'int a = 5;'
-const code = 'int main (unsigned int mm) {}'
+const code = 'const int a = 4 + 12; int b = a + 11 * 3; &b; &a;'
 console.log(run(code))

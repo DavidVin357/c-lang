@@ -1,3 +1,4 @@
+import { FunctionDeclaration } from 'typescript'
 import * as cTree from '../cTree'
 import { getRandonm } from '../helpers/getRandom'
 import { Value } from '../types'
@@ -8,62 +9,159 @@ import {
 
 export type Evaluator<T extends cTree.Node> = (node: T) => Value
 
-const STACK: [any?] = []
+// Code segment (stores function instructions)
+const CODE: { [identifier: string]: cTree.FunctionStorage } = {}
 
-let stackPointer = 0
+// Environment segment
+const ENVIRONMENT: {
+  [identifier: string]: {
+    address: number
+    type: string
+    typeQualifiers: string[]
+  }
+}[] = [{}]
+const extendEnvironment = (
+  name: string,
+  address: number,
+  type: string,
+  typeQualifiers: string[]
+) => {
+  const lastIndex = ENVIRONMENT.length - 1
+  ENVIRONMENT[lastIndex][name] = { address, type, typeQualifiers }
+}
+const setEnvironmentValue = (name: string, address: number) => {
+  const lastIndex = ENVIRONMENT.length - 1
+  ENVIRONMENT[lastIndex][name].address = address
+}
 
-const ENVIRONMENT: { [identifier: string]: number } = {}
-
-const word_size = 8
+const getEnvironmentValue = (name: string) => {
+  for (let i = ENVIRONMENT.length - 1; i >= 0; i--) {
+    const currentFrame = ENVIRONMENT[i]
+    if (currentFrame[name]) return currentFrame[name]
+  }
+  return { address: getRandomStackAddress(), type: 'int', typeQualifiers: null }
+}
+// C program memory
 const megabyte = 2 ** 20
 const buffer = new ArrayBuffer(20 * megabyte)
 
 const MEMORY = new DataView(buffer)
-
-const STACK_TOP = buffer.byteLength
-const STACK_BOTTOM = buffer.byteLength / 2
-let stackFree = STACK_BOTTOM
-const stackAllocateFrame = (index: number) => {}
-
-const HEAP_TOP = buffer.byteLength / 2
-const HEAP_BOTTOM = 0
-let heapFree = HEAP_BOTTOM
-
-const memoryAllocateBasic = (value: any, type: string, freeIndex: number) => {
+const memoryAllocateBasic = (
+  value: any,
+  type: string,
+  freeIndex: number
+): number => {
   switch (type) {
     case 'char' || 'signed char':
-      MEMORY.setInt8(freeIndex, value)
+      if (typeof value == 'string') {
+        MEMORY.setInt8(freeIndex, value.charCodeAt(0))
+      } else if (typeof value === 'number') {
+        MEMORY.setInt8(freeIndex, value)
+      } else {
+        throw Error('Invalid char')
+      }
+      return 1
 
     case 'unsigned char':
-      MEMORY.setInt8(freeIndex, value)
+      MEMORY.setUint8(freeIndex, value)
+      return 1
 
     case 'int':
       MEMORY.setInt32(freeIndex, value)
+      return 4
 
     case 'unsigned int':
       MEMORY.setUint32(freeIndex, value)
+      return 4
 
     case 'short':
       MEMORY.setInt16(freeIndex, value)
+      return 2
 
-    case 'unsinged short':
+    case 'unsigned short':
       MEMORY.setUint16(freeIndex, value)
+      return 2
 
     case 'long':
       MEMORY.setBigInt64(freeIndex, value)
+      return 8
 
-    case 'unsinged long':
+    case 'unsigned long':
       MEMORY.setBigUint64(freeIndex, value)
+      return 8
 
     // Floating Point types
 
     case 'float':
       MEMORY.setFloat32(freeIndex, value)
+      return 4
 
     case 'double':
       MEMORY.setFloat64(freeIndex, value)
+      return 8
+
+    default:
+      throw Error('not a primitive value')
   }
 }
+
+const memoryRetrieveBasic = (index: number, type: string): any => {
+  switch (type) {
+    case 'char' || 'signed char':
+      return String.fromCharCode(MEMORY.getInt8(index))
+
+    case 'unsigned char':
+      return MEMORY.getInt8(index)
+
+    case 'int':
+      return MEMORY.getInt32(index)
+
+    case 'unsigned int':
+      return MEMORY.getUint32(index)
+
+    case 'short':
+      return MEMORY.getInt16(index)
+
+    case 'unsigned short':
+      return MEMORY.getUint16(index)
+
+    case 'long':
+      return MEMORY.getBigInt64(index)
+
+    case 'unsigned long':
+      return MEMORY.getBigUint64(index)
+
+    // Floating Point types
+
+    case 'float':
+      return MEMORY.getFloat32(index)
+
+    case 'double':
+      return MEMORY.getFloat64(index)
+
+    default:
+      throw Error('not a primitive value')
+  }
+}
+
+// STACK Operations
+const STACK_TOP = buffer.byteLength
+const STACK_BOTTOM = buffer.byteLength / 2
+let stackFree = STACK_BOTTOM
+const pushOnStack = (value: any, type: string) => {
+  const address = stackFree
+  const size = memoryAllocateBasic(value, type, stackFree)
+
+  stackFree += size
+
+  return address
+}
+const getRandomStackAddress = () => getRandonm(STACK_BOTTOM, STACK_TOP)
+
+// HEAP Operations
+const HEAP_TOP = buffer.byteLength / 2
+const HEAP_BOTTOM = 0
+let heapFree = HEAP_BOTTOM
 
 const getRandomHeapAddress = () => getRandonm(HEAP_BOTTOM, HEAP_TOP)
 
@@ -78,9 +176,11 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   AssignmentExpression: function (node: cTree.AssignmentExpression) {
-    const stackIndex = ENVIRONMENT[node.name]
-    const currentValue = STACK[stackIndex]?.value
-    STACK[stackIndex].value = evaluateAssignmentExpression(
+    const name: string = node.name
+    const { address, type } = getEnvironmentValue(name)
+
+    const currentValue = memoryRetrieveBasic(address, type)
+    const value = evaluateAssignmentExpression(
       currentValue,
       actualValue(node.value),
       node.operator
@@ -88,53 +188,83 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   VariableDeclaration: function (node: cTree.VariableDeclaration) {
-    const specifiers = node.typeSequence.value
-    const type = node.declarator.type
     const name = node.declarator.name
+    const typeSpecifier = node.typeSpecifier.value
+    const typeQualifiers = node.typeQualifiers.value.map(
+      (t: cTree.TypeQualifier) => t.value
+    )
 
-    const variable = {
-      typeQualifiers: specifiers
-        .filter((s: cTree.Type) => s.type === 'typeQualifier')
-        .map((s: cTree.Type) => s.value),
-
-      typeSpecifiers: specifiers
-        .filter((s: cTree.Type) => s.type === 'typeSpecifier')
-        .map((s: cTree.Type) => s.value),
-
-      value: null,
-    }
-    if (type == 'Identifier') {
-      STACK.push(variable)
-      ENVIRONMENT[name] = stackPointer
-      stackPointer += 1
-    }
-    if (type == 'Pointer') {
-      ENVIRONMENT[name] = getRandomHeapAddress()
-    }
+    const address = pushOnStack(null, typeSpecifier)
+    extendEnvironment(name, address, typeSpecifier, typeQualifiers)
   },
 
   VariableInitialization: function (node: cTree.VariableInitialization) {
-    const specifiers = node.typeSequence.value
-
     const name = node.declarator.name
-    const isPointer = node.declarator.type === 'Pointer'
+    const value = evaluate(node.value)
+    const typeSpecifier = node.typeSpecifier.value
+    const typeQualifiers = node.typeQualifiers.value.map(
+      (t: cTree.TypeQualifier) => t.value
+    )
 
+    const isPointer = node.declarator.type === 'Pointer'
     if (isPointer) {
-      ENVIRONMENT[name] = node.value
     }
+    const address = pushOnStack(value, typeSpecifier)
+    extendEnvironment(name, address, typeSpecifier, typeQualifiers)
   },
+  FunctionDeclaration(node: cTree.FunctionDeclaration) {
+    // const name = node.name
+    // CODE[name] = {
+    //   body: node.body,
+    //   formals: node.formals,
+    // }
+  },
+
+  FunctionApplication(node: cTree.FunctionApplication) {
+    const name = node.name
+    const formals = CODE[name].formals
+    const args = node.args.map((arg) => evaluate(arg))
+
+    const new_env = {}
+
+    const new_frame = {}
+  },
+
+  Block(node: cTree.Block) {
+    // enter scope
+    const frameStart = stackFree
+    evaluate(node.body)
+    // exit scope
+    stackFree = frameStart
+  },
+
   ExpressionStatement: function (node: cTree.ExpressionStatement) {
     return evaluate(node.expression)
   },
-  Pointer: function (node: cTree.Declarator) {
+
+  Identifier: function (node: cTree.Identifier) {
     const name = node.name
+    const address = getEnvironmentValue(name).address
+    const type = getEnvironmentValue(name).type
+    return memoryRetrieveBasic(address, type)
   },
-  // Identifier: function (node: cTree.Identifier) {
-  //   const location = ENVIRONMENT[node.name]
-  //   if (location < STACK.length) {
-  //     return STACK[location].value
-  //   }
-  // },
+
+  Pointer: function (node: cTree.Declarator) {
+    const name = node.name.replace('*', '')
+    const address = getEnvironmentValue(name).address
+    const type = getEnvironmentValue(name).type
+    const pointer = memoryRetrieveBasic(address, type)
+
+    return memoryRetrieveBasic(pointer, type)
+  },
+
+  VariableAddress: function (node: cTree.VariableAddress) {
+    const name = node.name
+    const address = getEnvironmentValue(name).address
+
+    return address
+  },
+
   SequenceStatement: function (node: cTree.SequenceStatement) {
     let res
     for (const instr of node.statements) {

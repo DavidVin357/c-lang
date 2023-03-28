@@ -20,10 +20,10 @@ public class CLexer extends Lexer {
 		T__9=10, T__10=11, T__11=12, T__12=13, T__13=14, T__14=15, T__15=16, T__16=17, 
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
 		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
-		T__31=32, MUL=33, DIV=34, ADD=35, SUB=36, MOD=37, LOGICAL_AND=38, LOGICAL_OR=39, 
-		EQUALS=40, NOT_EQUALS=41, LESS=42, LESS_EQUAL=43, GREATER=44, GREATER_EQUAL=45, 
-		POSTFIX_ADD=46, WHITESPACE=47, DECIMAL=48, FRACTION=49, Identifier=50, 
-		Pointer=51;
+		MUL=32, DIV=33, ADD=34, SUB=35, MOD=36, LOGICAL_AND=37, LOGICAL_OR=38, 
+		EQUALS=39, NOT_EQUALS=40, LESS=41, LESS_EQUAL=42, GREATER=43, GREATER_EQUAL=44, 
+		POSTFIX_ADD=45, VAR_ADDRESS=46, WHITESPACE=47, DECIMAL=48, FRACTION=49, 
+		Identifier=50, Pointer=51;
 	public static String[] channelNames = {
 		"DEFAULT_TOKEN_CHANNEL", "HIDDEN"
 	};
@@ -37,11 +37,11 @@ public class CLexer extends Lexer {
 			"T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", "T__7", "T__8", 
 			"T__9", "T__10", "T__11", "T__12", "T__13", "T__14", "T__15", "T__16", 
 			"T__17", "T__18", "T__19", "T__20", "T__21", "T__22", "T__23", "T__24", 
-			"T__25", "T__26", "T__27", "T__28", "T__29", "T__30", "T__31", "MUL", 
-			"DIV", "ADD", "SUB", "MOD", "LOGICAL_AND", "LOGICAL_OR", "EQUALS", "NOT_EQUALS", 
-			"LESS", "LESS_EQUAL", "GREATER", "GREATER_EQUAL", "POSTFIX_ADD", "WHITESPACE", 
-			"DECIMAL", "FRACTION", "Nondigit", "Digit", "Fraction", "Identifier", 
-			"Pointer"
+			"T__25", "T__26", "T__27", "T__28", "T__29", "T__30", "MUL", "DIV", "ADD", 
+			"SUB", "MOD", "LOGICAL_AND", "LOGICAL_OR", "EQUALS", "NOT_EQUALS", "LESS", 
+			"LESS_EQUAL", "GREATER", "GREATER_EQUAL", "POSTFIX_ADD", "VAR_ADDRESS", 
+			"WHITESPACE", "DECIMAL", "FRACTION", "Nondigit", "Digit", "Fraction", 
+			"Identifier", "Pointer"
 		};
 	}
 	public static final String[] ruleNames = makeRuleNames();
@@ -52,8 +52,8 @@ public class CLexer extends Lexer {
 			"'int'", "'unsigned int'", "'long'", "'unsigned long'", "'float'", "'double'", 
 			"'const'", "'restrict'", "'volatile'", "'='", "';'", "'*='", "'/='", 
 			"'%='", "'+='", "'-='", "'<<='", "'>>='", "'&='", "'^='", "'|='", "'('", 
-			"')'", "'{'", "'}'", "','", "':'", "'*'", "'/'", "'+'", "'-'", "'%'", 
-			"'&&'", "'||'", "'=='", "'!='", "'<'", "'<='", "'>'", "'>='", "'++'"
+			"')'", "'{'", "'}'", "','", "'*'", "'/'", "'+'", "'-'", "'%'", "'&&'", 
+			"'||'", "'=='", "'!='", "'<'", "'<='", "'>'", "'>='", "'++'", "'&'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
@@ -61,10 +61,10 @@ public class CLexer extends Lexer {
 		return new String[] {
 			null, null, null, null, null, null, null, null, null, null, null, null, 
 			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, "MUL", "DIV", "ADD", 
+			null, null, null, null, null, null, null, null, "MUL", "DIV", "ADD", 
 			"SUB", "MOD", "LOGICAL_AND", "LOGICAL_OR", "EQUALS", "NOT_EQUALS", "LESS", 
-			"LESS_EQUAL", "GREATER", "GREATER_EQUAL", "POSTFIX_ADD", "WHITESPACE", 
-			"DECIMAL", "FRACTION", "Identifier", "Pointer"
+			"LESS_EQUAL", "GREATER", "GREATER_EQUAL", "POSTFIX_ADD", "VAR_ADDRESS", 
+			"WHITESPACE", "DECIMAL", "FRACTION", "Identifier", "Pointer"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -144,8 +144,8 @@ public class CLexer extends Lexer {
 		"\22\3\22\3\23\3\23\3\23\3\24\3\24\3\24\3\25\3\25\3\25\3\26\3\26\3\26\3"+
 		"\27\3\27\3\27\3\27\3\30\3\30\3\30\3\30\3\31\3\31\3\31\3\32\3\32\3\32\3"+
 		"\33\3\33\3\33\3\34\3\34\3\35\3\35\3\36\3\36\3\37\3\37\3 \3 \3!\3!\3\""+
-		"\3\"\3#\3#\3$\3$\3%\3%\3&\3&\3\'\3\'\3\'\3(\3(\3(\3)\3)\3)\3*\3*\3*\3"+
-		"+\3+\3,\3,\3,\3-\3-\3.\3.\3.\3/\3/\3/\3\60\6\60\u013a\n\60\r\60\16\60"+
+		"\3\"\3#\3#\3$\3$\3%\3%\3&\3&\3&\3\'\3\'\3\'\3(\3(\3(\3)\3)\3)\3*\3*\3"+
+		"+\3+\3+\3,\3,\3-\3-\3-\3.\3.\3.\3/\3/\3\60\6\60\u013a\n\60\r\60\16\60"+
 		"\u013b\3\60\3\60\3\61\6\61\u0141\n\61\r\61\16\61\u0142\3\62\3\62\3\63"+
 		"\3\63\3\64\6\64\u014a\n\64\r\64\16\64\u014b\3\65\5\65\u014f\n\65\3\65"+
 		"\3\65\3\65\3\65\3\65\5\65\u0156\n\65\3\66\3\66\3\66\7\66\u015b\n\66\f"+
@@ -170,9 +170,9 @@ public class CLexer extends Lexer {
 		"\2\2\2-\u00f8\3\2\2\2/\u00fc\3\2\2\2\61\u0100\3\2\2\2\63\u0103\3\2\2\2"+
 		"\65\u0106\3\2\2\2\67\u0109\3\2\2\29\u010b\3\2\2\2;\u010d\3\2\2\2=\u010f"+
 		"\3\2\2\2?\u0111\3\2\2\2A\u0113\3\2\2\2C\u0115\3\2\2\2E\u0117\3\2\2\2G"+
-		"\u0119\3\2\2\2I\u011b\3\2\2\2K\u011d\3\2\2\2M\u011f\3\2\2\2O\u0122\3\2"+
-		"\2\2Q\u0125\3\2\2\2S\u0128\3\2\2\2U\u012b\3\2\2\2W\u012d\3\2\2\2Y\u0130"+
-		"\3\2\2\2[\u0132\3\2\2\2]\u0135\3\2\2\2_\u0139\3\2\2\2a\u0140\3\2\2\2c"+
+		"\u0119\3\2\2\2I\u011b\3\2\2\2K\u011d\3\2\2\2M\u0120\3\2\2\2O\u0123\3\2"+
+		"\2\2Q\u0126\3\2\2\2S\u0129\3\2\2\2U\u012b\3\2\2\2W\u012e\3\2\2\2Y\u0130"+
+		"\3\2\2\2[\u0133\3\2\2\2]\u0136\3\2\2\2_\u0139\3\2\2\2a\u0140\3\2\2\2c"+
 		"\u0144\3\2\2\2e\u0146\3\2\2\2g\u0149\3\2\2\2i\u0155\3\2\2\2k\u0157\3\2"+
 		"\2\2m\u015f\3\2\2\2op\7x\2\2pq\7q\2\2qr\7k\2\2rs\7f\2\2s\4\3\2\2\2tu\7"+
 		"e\2\2uv\7j\2\2vw\7c\2\2wx\7t\2\2x\6\3\2\2\2yz\7w\2\2z{\7p\2\2{|\7u\2\2"+
@@ -215,15 +215,15 @@ public class CLexer extends Lexer {
 		"\u0108\7?\2\2\u0108\66\3\2\2\2\u0109\u010a\7*\2\2\u010a8\3\2\2\2\u010b"+
 		"\u010c\7+\2\2\u010c:\3\2\2\2\u010d\u010e\7}\2\2\u010e<\3\2\2\2\u010f\u0110"+
 		"\7\177\2\2\u0110>\3\2\2\2\u0111\u0112\7.\2\2\u0112@\3\2\2\2\u0113\u0114"+
-		"\7<\2\2\u0114B\3\2\2\2\u0115\u0116\7,\2\2\u0116D\3\2\2\2\u0117\u0118\7"+
-		"\61\2\2\u0118F\3\2\2\2\u0119\u011a\7-\2\2\u011aH\3\2\2\2\u011b\u011c\7"+
-		"/\2\2\u011cJ\3\2\2\2\u011d\u011e\7\'\2\2\u011eL\3\2\2\2\u011f\u0120\7"+
-		"(\2\2\u0120\u0121\7(\2\2\u0121N\3\2\2\2\u0122\u0123\7~\2\2\u0123\u0124"+
-		"\7~\2\2\u0124P\3\2\2\2\u0125\u0126\7?\2\2\u0126\u0127\7?\2\2\u0127R\3"+
-		"\2\2\2\u0128\u0129\7#\2\2\u0129\u012a\7?\2\2\u012aT\3\2\2\2\u012b\u012c"+
-		"\7>\2\2\u012cV\3\2\2\2\u012d\u012e\7>\2\2\u012e\u012f\7?\2\2\u012fX\3"+
-		"\2\2\2\u0130\u0131\7@\2\2\u0131Z\3\2\2\2\u0132\u0133\7@\2\2\u0133\u0134"+
-		"\7?\2\2\u0134\\\3\2\2\2\u0135\u0136\7-\2\2\u0136\u0137\7-\2\2\u0137^\3"+
+		"\7,\2\2\u0114B\3\2\2\2\u0115\u0116\7\61\2\2\u0116D\3\2\2\2\u0117\u0118"+
+		"\7-\2\2\u0118F\3\2\2\2\u0119\u011a\7/\2\2\u011aH\3\2\2\2\u011b\u011c\7"+
+		"\'\2\2\u011cJ\3\2\2\2\u011d\u011e\7(\2\2\u011e\u011f\7(\2\2\u011fL\3\2"+
+		"\2\2\u0120\u0121\7~\2\2\u0121\u0122\7~\2\2\u0122N\3\2\2\2\u0123\u0124"+
+		"\7?\2\2\u0124\u0125\7?\2\2\u0125P\3\2\2\2\u0126\u0127\7#\2\2\u0127\u0128"+
+		"\7?\2\2\u0128R\3\2\2\2\u0129\u012a\7>\2\2\u012aT\3\2\2\2\u012b\u012c\7"+
+		">\2\2\u012c\u012d\7?\2\2\u012dV\3\2\2\2\u012e\u012f\7@\2\2\u012fX\3\2"+
+		"\2\2\u0130\u0131\7@\2\2\u0131\u0132\7?\2\2\u0132Z\3\2\2\2\u0133\u0134"+
+		"\7-\2\2\u0134\u0135\7-\2\2\u0135\\\3\2\2\2\u0136\u0137\7(\2\2\u0137^\3"+
 		"\2\2\2\u0138\u013a\t\2\2\2\u0139\u0138\3\2\2\2\u013a\u013b\3\2\2\2\u013b"+
 		"\u0139\3\2\2\2\u013b\u013c\3\2\2\2\u013c\u013d\3\2\2\2\u013d\u013e\b\60"+
 		"\2\2\u013e`\3\2\2\2\u013f\u0141\t\3\2\2\u0140\u013f\3\2\2\2\u0141\u0142"+

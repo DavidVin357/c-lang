@@ -6,6 +6,7 @@ import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
 import { DecimalContext } from "./CParser";
 import { FractionContext } from "./CParser";
 import { IdentifierContext } from "./CParser";
+import { PointerContext } from "./CParser";
 import { ApplicationContext } from "./CParser";
 import { ParenthesesContext } from "./CParser";
 import { AdditiveContext } from "./CParser";
@@ -14,10 +15,11 @@ import { RelationalContext } from "./CParser";
 import { EqualityContext } from "./CParser";
 import { LogicalAndContext } from "./CParser";
 import { LogicalOrContext } from "./CParser";
+import { VarAddressContext } from "./CParser";
 import { AssignmentExpressionContext } from "./CParser";
-import { DeclarationSpecifiersContext } from "./CParser";
 import { TypeSpecifierContext } from "./CParser";
 import { TypeQualifierContext } from "./CParser";
+import { TypeQualifiersContext } from "./CParser";
 import { DeclarationSpecifierContext } from "./CParser";
 import { DeclaratorContext } from "./CParser";
 import { InitializationContext } from "./CParser";
@@ -32,6 +34,7 @@ import { CompoundStatementContext } from "./CParser";
 import { ParameterDeclarationContext } from "./CParser";
 import { ParameterListContext } from "./CParser";
 import { FunctionDeclarationContext } from "./CParser";
+import { ArgumentExpressionListContext } from "./CParser";
 import { FunctionApplicationContext } from "./CParser";
 import { ProgramContext } from "./CParser";
 
@@ -67,6 +70,14 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitIdentifier?: (ctx: IdentifierContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `Pointer`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitPointer?: (ctx: PointerContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by the `Application`
@@ -133,19 +144,20 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitLogicalOr?: (ctx: LogicalOrContext) => Result;
 
 	/**
+	 * Visit a parse tree produced by the `VarAddress`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitVarAddress?: (ctx: VarAddressContext) => Result;
+
+	/**
 	 * Visit a parse tree produced by the `AssignmentExpression`
 	 * labeled alternative in `CParser.expression`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitAssignmentExpression?: (ctx: AssignmentExpressionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by `CParser.declarationSpecifiers`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `CParser.typeSpecifier`.
@@ -160,6 +172,13 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitTypeQualifier?: (ctx: TypeQualifierContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.typeQualifiers`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitTypeQualifiers?: (ctx: TypeQualifiersContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `CParser.declarationSpecifier`.
@@ -258,6 +277,13 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitFunctionDeclaration?: (ctx: FunctionDeclarationContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.argumentExpressionList`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitArgumentExpressionList?: (ctx: ArgumentExpressionListContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `CParser.functionApplication`.

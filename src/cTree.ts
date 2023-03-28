@@ -6,11 +6,16 @@ export type Literal = {
 
 export type Identifier = {
   type: 'Identifier'
-  name: Declarator
+  name: string
 }
 
 export type Pointer = {
   type: 'Pointer'
+  name: string
+}
+
+export type VariableAddress = {
+  type: 'VariableAddress'
   name: string
 }
 
@@ -75,6 +80,7 @@ export interface ExpressionMap {
   Literal: Literal
   Identifier: Identifier
   Declarator: Declarator
+  VariableAddress: VariableAddress
   AssignmentExpression: AssignmentExpression
   BinaryExpression: BinaryExpression
   SequenceExpression: SequenceExpression
@@ -91,6 +97,7 @@ export type TypeSpecifier = {
   type: 'typeSpecifier'
   value: string
 }
+
 export type SequenceType = {
   type: 'SequenceType'
   value: Array<Type>
@@ -108,21 +115,24 @@ export type Type = TypeQualifier | TypeSpecifier | SequenceType
 // Statements
 export type VariableDeclaration = {
   type: 'VariableDeclaration'
-  typeSequence: SequenceType
+  typeSpecifier: TypeSpecifier
+  typeQualifiers: SequenceType
   declarator: Declarator
-}
-
-export type ParameterDeclaration = {
-  type: 'ParameterDeclaration'
-  typeSequence: SequenceType
-  name: string
 }
 
 export type VariableInitialization = {
   type: 'VariableInitialization'
-  typeSequence: Type
+  typeSpecifier: TypeSpecifier
+  typeQualifiers: SequenceType
   declarator: Declarator
   value: any
+}
+
+export type ParameterDeclaration = {
+  type: 'ParameterDeclaration'
+  // typeSequence: SequenceType
+  typeSpecifier: TypeSpecifier
+  declarator: Declarator
 }
 
 export type Declaration = VariableDeclaration
@@ -142,17 +152,31 @@ export interface StatementMap {
   VariableInitialization: VariableInitialization
   ParameterDeclaration: ParameterDeclaration
   FunctionDeclaration: FunctionDeclaration
+  FunctionApplication: FunctionApplication
   ExpressionStatement: ExpressionStatement
   SequenceStatement: SequenceStatement
+  Block: Block
 }
 
 export type Statement = StatementMap[keyof StatementMap]
-
+export type Block = {
+  type: 'Block'
+  body: SequenceStatement
+}
 export type FunctionDeclaration = {
   type: 'FunctionDeclaration'
   name: string
   body: Statement
-  args: Array<Statement>
+  formals: Statement[]
+}
+export type FunctionStorage = {
+  body: Statement
+  formals: Statement[]
+}
+export type FunctionApplication = {
+  type: 'FunctionApplication'
+  name: string
+  args: Array<Expression>
 }
 
 export type Program = {

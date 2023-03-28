@@ -17,7 +17,7 @@ LESS_EQUAL : '<=';
 GREATER : '>';
 GREATER_EQUAL : '>=';
 POSTFIX_ADD: '++';
-
+VAR_ADDRESS: '&';
 WHITESPACE: [ \r\n\t]+ -> skip;
 DECIMAL: [0-9]+;
 FRACTION: Fraction;
@@ -40,8 +40,8 @@ Fraction
     |   Digit '.'
     ;
 
-declarationSpecifiers
-    : (typeQualifier | typeSpecifier)+;
+// declarationSpecifiers
+//     : (typeQualifier | typeSpecifier)+;
 
 typeSpecifier
     :   'void'
@@ -57,10 +57,14 @@ typeSpecifier
     |   'double'
     ;
 
+// typeSpecifier: type '*'?;
+
 typeQualifier
     :   'const'
     |   'restrict'
     |   'volatile';
+
+typeQualifiers: (typeQualifier+)?;
 
 declarationSpecifier
     :   typeSpecifier
@@ -82,11 +86,11 @@ Pointer
 declarator : Pointer | Identifier;
 
 initialization
-    : specifiers=declarationSpecifiers declarator '=' value=expression ';'
+    : qualifiers=typeQualifiers typeSpecifier declarator '=' value=expression ';'
     ;
 
 declaration
-    : specifiers=declarationSpecifiers declarator ';'
+    : qualifiers=typeQualifiers typeSpecifier declarator ';'
     ;
 
 assignmentOperator
@@ -102,6 +106,7 @@ expression
    : DECIMAL                                                    # Decimal
    | FRACTION                                                   # Fraction
    | Identifier                                                 # Identifier
+   | Pointer                                                    # Pointer
    | functionApplication                                        # Application
    | '(' inner=expression ')'                                   # Parentheses
    | left=expression operator=(ADD | SUB) right=expression      # Additive
@@ -110,6 +115,7 @@ expression
    | left=expression operator=(EQUALS | NOT_EQUALS) right=expression  # Equality		
    | left=expression operator=LOGICAL_AND right=expression      # LogicalAnd
    | left=expression operator=LOGICAL_OR right=expression       # LogicalOr
+   | operator=VAR_ADDRESS right=Identifier                      # VarAddress
    | assignment                                                 # AssignmentExpression
    ;
 
@@ -122,6 +128,7 @@ statement
     |   declaration
     |   initialization
     |   functionDeclaration
+    |   functionApplication
     ;
 
 blockItemList
@@ -133,18 +140,23 @@ compoundStatement
     ;
 
 parameterDeclaration
-    :   declarationSpecifiers declarator
+    :   typeSpecifier declarator
     ;
     
 parameterList
-    :   parameterDeclaration (',' parameterDeclaration)*
+    :   typeSpecifier (',' parameterDeclaration)*
     ;
 
 functionDeclaration
-    :   declarationSpecifiers? Identifier '(' parameterList ')' compoundStatement
+    :   typeSpecifier Identifier '(' parameterList ')' compoundStatement
     ;
+
+argumentExpressionList
+    :   expression (',' expression)*
+    ;
+    
 functionApplication
-    : Identifier '(' (declarator | DECIMAL | FRACTION) ')' ':'
+    : Identifier '(' argumentExpressionList ')' ';'
     ;
 
 program 
