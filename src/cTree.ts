@@ -116,7 +116,18 @@ export type ConditionalStatement = {
 export type SwitchStatement = {
   type: 'SwitchStatement'
   condition: Expression
-  body: CompoundStatement
+  body: SwitchBodyStatement
+}
+
+export type SwitchBodyStatement = {
+  type: 'SwitchBodyStatement'
+  statements: Array<LabeledStatement>
+}
+
+export type LabeledStatement = {
+  type: 'LabeledStatement'
+  condition: Expression | null
+  body: Statement
 }
 
 export type CompoundStatement = {
@@ -130,6 +141,9 @@ export interface StatementMap {
   SequenceStatement: SequenceStatement
   ConditionalStatement: ConditionalStatement
   CompoundStatement: CompoundStatement
+  SwitchStatement: SwitchStatement
+  SwitchBodyStatement: SwitchBodyStatement
+  LabeledStatement: LabeledStatement
 }
 
 export type Statement = StatementMap[keyof StatementMap]

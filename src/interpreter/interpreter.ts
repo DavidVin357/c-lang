@@ -67,6 +67,19 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       }
     }
   },
+  SwitchStatement: function (node:cTree.SwitchStatement) {
+    const condition = evaluate(node.condition)
+    if (!Number.isInteger(condition)) {
+      console.error("switch expressions must be of type int or char")
+    }
+    // count the number of defaults
+    const defCount = 0
+    // check the condition of each labeledstatement
+    for (const caseStatement of node.body.statements) {
+      console.log(caseStatement)
+      evaluateLabeled(caseStatement, condition)
+    }
+  },
 
   Identifier: function (node: cTree.Identifier) {
     const location = ENVIRONMENT[node.name]
@@ -77,7 +90,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   SequenceStatement: function (node: cTree.SequenceStatement) {
     let res
     for (const instr of node.statements) {
-      console.log(instr.type)
       res = evaluate(instr)
     }
     return res
@@ -85,7 +97,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   CompoundStatement: function (node: cTree.CompoundStatement) {
     let res
     for (const instr of node.statements) {
-      console.log(instr.type)
       res = evaluate(instr)
     }
     return res
@@ -98,6 +109,23 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
     return res
   },
+}
+
+export function evaluateLabeled(node: cTree.LabeledStatement, switchCon: number) {
+  if (node.condition != null) {
+    const condition = evaluate(node.condition)
+    if (condition === switchCon) {
+      console.log("evaluating...")
+      const res = evaluate(node.body)
+      return res
+    }
+  }
+  else {
+    // default case
+    const res = evaluate(node.body)
+    return res
+  }
+
 }
 
 export function evaluate(node: cTree.Node) {

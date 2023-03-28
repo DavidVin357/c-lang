@@ -13,7 +13,7 @@ import {
   FractionContext,
   GreaterContext,
   GreaterEqualContext,
-  IdentifierContext,
+  IdentifierContext, LabeledStatementContext,
   LessContext,
   LessEqualContext,
   LogicalAndContext,
@@ -21,7 +21,7 @@ import {
   ModularContext,
   MultiplicationContext,
   ProgramContext,
-  SubtractionContext, SwitchStatementContext,
+  SubtractionContext, SwitchBodyStatementContext, SwitchStatementContext,
   TypeQualifierContext,
   TypeSpecifierContext,
 } from '../lang/CParser'
@@ -259,7 +259,24 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     return {
       type: 'SwitchStatement',
       condition: new ExpressionGenerator().visit(ctx._condition),
-      body: new StatementGenerator().visitCompoundStatement(ctx.body)
+      body: new StatementGenerator().visitSwitchBodyStatement(ctx._body)
+    }
+  }
+
+  visitSwitchBodyStatement(ctx: SwitchBodyStatementContext): cTree.SwitchBodyStatement {
+    const childStatements = ctx.switchBodyList()?.children
+    return {
+      type: "SwitchBodyStatement",
+      statements: childStatements ? childStatements.map((child) => this.visitLabeledStatement(child)) : []
+    }
+  }
+
+  visitLabeledStatement(ctx: ParseTree): cTree.LabeledStatement {
+    const cast = (<LabeledStatementContext> ctx)
+    return {
+      type: "LabeledStatement",
+      condition: cast._condition ? new ExpressionGenerator().visit(cast._condition) : null,
+      body: new StatementGenerator().visit(cast._body)
     }
   }
 
@@ -274,20 +291,12 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
-  visitCompoundStatement(ctx: CompoundStatementContext): cTree.SequenceStatement {
+  visitCompoundStatement(ctx: CompoundStatementContext): cTree.CompoundStatement {
     const childStatements = ctx.blockItemList()?.children
-    console.log(childStatements)
     return {
-      type: 'CompoundStatement'
+      type: 'CompoundStatement',
+      statements: childStatements ? childStatements.map((child) => this.visit(child)) : []
     }
-    // return {
-    //   type: 'CompoundStatement',
-    //   body: Statement[],
-    // }
-    // return {
-    //   type: "CompoundStatement",
-    //   statements: childStatements?.map(child => this.visit(child)): [],
-    // }
   }
 
   visit(tree: ParseTree): cTree.Statement {

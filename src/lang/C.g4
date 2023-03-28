@@ -114,7 +114,7 @@ conditionalStatement
     ;
 
 switchStatement
-    :   'switch' '(' condition=expression ')' body=compoundStatement
+    :   'switch' '(' condition=expression ')' body=switchBodyStatement
     ;
 
 labeledStatement
@@ -129,6 +129,14 @@ compoundStatement
 blockItemList
     :   statement+
     ;
+
+switchBodyList
+    :   labeledStatement+
+    ;
+
+switchBodyStatement
+    :   '{' switchBodyList? '}'
+    ;
     
 statement
     :   expressionStatement
@@ -136,6 +144,8 @@ statement
     |   conditionalStatement
     |   compoundStatement
     |   switchStatement
+    |   labeledStatement
+    |   switchBodyStatement
     ;
 
 program 

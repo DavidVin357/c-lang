@@ -32,8 +32,11 @@ import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
 import { ConditionalStatementContext } from "./CParser";
 import { SwitchStatementContext } from "./CParser";
+import { LabeledStatementContext } from "./CParser";
 import { CompoundStatementContext } from "./CParser";
 import { BlockItemListContext } from "./CParser";
+import { SwitchBodyListContext } from "./CParser";
+import { SwitchBodyStatementContext } from "./CParser";
 import { StatementContext } from "./CParser";
 import { ProgramContext } from "./CParser";
 
@@ -397,6 +400,17 @@ export interface CListener extends ParseTreeListener {
 	exitSwitchStatement?: (ctx: SwitchStatementContext) => void;
 
 	/**
+	 * Enter a parse tree produced by `CParser.labeledStatement`.
+	 * @param ctx the parse tree
+	 */
+	enterLabeledStatement?: (ctx: LabeledStatementContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.labeledStatement`.
+	 * @param ctx the parse tree
+	 */
+	exitLabeledStatement?: (ctx: LabeledStatementContext) => void;
+
+	/**
 	 * Enter a parse tree produced by `CParser.compoundStatement`.
 	 * @param ctx the parse tree
 	 */
@@ -417,6 +431,28 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitBlockItemList?: (ctx: BlockItemListContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.switchBodyList`.
+	 * @param ctx the parse tree
+	 */
+	enterSwitchBodyList?: (ctx: SwitchBodyListContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.switchBodyList`.
+	 * @param ctx the parse tree
+	 */
+	exitSwitchBodyList?: (ctx: SwitchBodyListContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.switchBodyStatement`.
+	 * @param ctx the parse tree
+	 */
+	enterSwitchBodyStatement?: (ctx: SwitchBodyStatementContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.switchBodyStatement`.
+	 * @param ctx the parse tree
+	 */
+	exitSwitchBodyStatement?: (ctx: SwitchBodyStatementContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.statement`.
