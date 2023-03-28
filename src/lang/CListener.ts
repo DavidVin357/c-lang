@@ -18,6 +18,8 @@ import { LogicalAndContext } from "./CParser";
 import { LogicalOrContext } from "./CParser";
 import { VarAddressContext } from "./CParser";
 import { AssignmentExpressionContext } from "./CParser";
+import { MallocExpressionContext } from "./CParser";
+import { SizeOfOperatorContext } from "./CParser";
 import { TypeSpecifierContext } from "./CParser";
 import { TypeQualifierContext } from "./CParser";
 import { TypeQualifiersContext } from "./CParser";
@@ -27,6 +29,8 @@ import { InitializationContext } from "./CParser";
 import { DeclarationContext } from "./CParser";
 import { AssignmentOperatorContext } from "./CParser";
 import { AssignmentContext } from "./CParser";
+import { MallocContext } from "./CParser";
+import { SizeofContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
 import { ReturnStatementContext } from "./CParser";
@@ -242,6 +246,32 @@ export interface CListener extends ParseTreeListener {
 	exitAssignmentExpression?: (ctx: AssignmentExpressionContext) => void;
 
 	/**
+	 * Enter a parse tree produced by the `MallocExpression`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterMallocExpression?: (ctx: MallocExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `MallocExpression`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitMallocExpression?: (ctx: MallocExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `SizeOfOperator`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterSizeOfOperator?: (ctx: SizeOfOperatorContext) => void;
+	/**
+	 * Exit a parse tree produced by the `SizeOfOperator`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitSizeOfOperator?: (ctx: SizeOfOperatorContext) => void;
+
+	/**
 	 * Enter a parse tree produced by `CParser.typeSpecifier`.
 	 * @param ctx the parse tree
 	 */
@@ -339,6 +369,28 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitAssignment?: (ctx: AssignmentContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.malloc`.
+	 * @param ctx the parse tree
+	 */
+	enterMalloc?: (ctx: MallocContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.malloc`.
+	 * @param ctx the parse tree
+	 */
+	exitMalloc?: (ctx: MallocContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.sizeof`.
+	 * @param ctx the parse tree
+	 */
+	enterSizeof?: (ctx: SizeofContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.sizeof`.
+	 * @param ctx the parse tree
+	 */
+	exitSizeof?: (ctx: SizeofContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.expression`.

@@ -76,6 +76,16 @@ export type SequenceExpression = {
   expressions: Array<Expression>
 }
 
+export type Malloc = {
+  type: 'Malloc'
+  size: Expression
+}
+
+export type SizeOf = {
+  type: 'SizeOf'
+  arg: Expression | TypeSpecifier
+}
+
 export interface ExpressionMap {
   Literal: Literal
   Identifier: Identifier
@@ -84,6 +94,8 @@ export interface ExpressionMap {
   AssignmentExpression: AssignmentExpression
   BinaryExpression: BinaryExpression
   FunctionApplication: FunctionApplication
+  Malloc: Malloc
+  SizeOf: SizeOf
   SequenceExpression: SequenceExpression
 }
 

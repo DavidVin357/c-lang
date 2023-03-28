@@ -28,6 +28,8 @@ import {
   TypeSpecifierContext,
   VarAddressContext,
   CharContext,
+  MallocContext,
+  SizeofContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -162,6 +164,21 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       type: 'FunctionApplication',
       name,
       args,
+    }
+  }
+  visitMalloc(ctx: MallocContext): cTree.Malloc {
+    return {
+      type: 'Malloc',
+      size: this.visit(ctx._size),
+    }
+  }
+
+  visitSizeOf(ctx: SizeofContext): cTree.SizeOf {
+    return {
+      type: 'SizeOf',
+      arg: ctx._expr
+        ? this.visit(ctx._expr)
+        : new TypeGenerator().visitTypeSpecifier(ctx._type),
     }
   }
 

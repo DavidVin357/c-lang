@@ -18,6 +18,8 @@ import { LogicalAndContext } from "./CParser";
 import { LogicalOrContext } from "./CParser";
 import { VarAddressContext } from "./CParser";
 import { AssignmentExpressionContext } from "./CParser";
+import { MallocExpressionContext } from "./CParser";
+import { SizeOfOperatorContext } from "./CParser";
 import { TypeSpecifierContext } from "./CParser";
 import { TypeQualifierContext } from "./CParser";
 import { TypeQualifiersContext } from "./CParser";
@@ -27,6 +29,8 @@ import { InitializationContext } from "./CParser";
 import { DeclarationContext } from "./CParser";
 import { AssignmentOperatorContext } from "./CParser";
 import { AssignmentContext } from "./CParser";
+import { MallocContext } from "./CParser";
+import { SizeofContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
 import { ReturnStatementContext } from "./CParser";
@@ -170,6 +174,22 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitAssignmentExpression?: (ctx: AssignmentExpressionContext) => Result;
 
 	/**
+	 * Visit a parse tree produced by the `MallocExpression`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitMallocExpression?: (ctx: MallocExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `SizeOfOperator`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSizeOfOperator?: (ctx: SizeOfOperatorContext) => Result;
+
+	/**
 	 * Visit a parse tree produced by `CParser.typeSpecifier`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -231,6 +251,20 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitAssignment?: (ctx: AssignmentContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.malloc`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitMalloc?: (ctx: MallocContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.sizeof`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSizeof?: (ctx: SizeofContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `CParser.expression`.

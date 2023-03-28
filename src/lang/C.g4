@@ -102,6 +102,12 @@ assignmentOperator
 assignment
     : Identifier operator=assignmentOperator value=expression;
 
+malloc
+    : 'malloc' '(' size=expression ')'
+    ;
+sizeof
+    : 'sizeof' '('  expr=expression | type=typeSpecifier ')'
+    ;
 
 expression
    : DECIMAL                                                    # Decimal
@@ -119,6 +125,8 @@ expression
    | left=expression operator=LOGICAL_OR right=expression       # LogicalOr
    | operator=VAR_ADDRESS right=Identifier                      # VarAddress
    | assignment                                                 # AssignmentExpression
+   | malloc                                                     # MallocExpression
+   | sizeof                                                     # SizeOfOperator
    ;
 
 expressionStatement

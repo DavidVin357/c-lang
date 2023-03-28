@@ -16,7 +16,11 @@ const code = `
   } 
   int main(){
     int g = 1; 
-    return 4 + g + a();
+    int *b = 23;
     a();
+    int *p = malloc(64);
+    int *p2 = malloc(832);
+    int *p3 = malloc(82);
+    return p3;
   }`
 console.log(run(code))
