@@ -5,6 +5,7 @@ import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
 import { DecimalContext } from "./CParser";
 import { FractionContext } from "./CParser";
+import { CharContext } from "./CParser";
 import { IdentifierContext } from "./CParser";
 import { PointerContext } from "./CParser";
 import { ApplicationContext } from "./CParser";
@@ -28,6 +29,7 @@ import { AssignmentOperatorContext } from "./CParser";
 import { AssignmentContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
+import { ReturnStatementContext } from "./CParser";
 import { StatementContext } from "./CParser";
 import { BlockItemListContext } from "./CParser";
 import { CompoundStatementContext } from "./CParser";
@@ -69,6 +71,19 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitFraction?: (ctx: FractionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `Char`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterChar?: (ctx: CharContext) => void;
+	/**
+	 * Exit a parse tree produced by the `Char`
+	 * labeled alternative in `CParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitChar?: (ctx: CharContext) => void;
 
 	/**
 	 * Enter a parse tree produced by the `Identifier`
@@ -346,6 +361,17 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitExpressionStatement?: (ctx: ExpressionStatementContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.returnStatement`.
+	 * @param ctx the parse tree
+	 */
+	enterReturnStatement?: (ctx: ReturnStatementContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.returnStatement`.
+	 * @param ctx the parse tree
+	 */
+	exitReturnStatement?: (ctx: ReturnStatementContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.statement`.

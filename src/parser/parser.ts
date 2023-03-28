@@ -7,7 +7,6 @@ import {
   CParser,
   DecimalContext,
   DeclarationContext,
-  DeclarationSpecifierContext,
   DeclaratorContext,
   EqualityContext,
   ExpressionContext,
@@ -15,19 +14,20 @@ import {
   FractionContext,
   FunctionApplicationContext,
   FunctionDeclarationContext,
+  ReturnStatementContext,
   IdentifierContext,
   InitializationContext,
   LogicalAndContext,
   LogicalOrContext,
   MultiplicativeContext,
   ParameterDeclarationContext,
-  ParameterListContext,
   PointerContext,
   ProgramContext,
   RelationalContext,
   TypeQualifierContext,
   TypeSpecifierContext,
   VarAddressContext,
+  CharContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -51,6 +51,14 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     return {
       type: 'Literal',
       value: parseFloat(ctx.text),
+      raw: ctx.text,
+    }
+  }
+
+  visitChar(ctx: CharContext): cTree.Expression {
+    return {
+      type: 'Literal',
+      value: ctx.text.replace("'", '').charCodeAt(0),
       raw: ctx.text,
     }
   }
@@ -143,6 +151,20 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
+  visitFunctionApplication(
+    ctx: FunctionApplicationContext
+  ): cTree.FunctionApplication {
+    const name = ctx.Identifier().text
+    const expressionArgs = ctx.argumentExpressionList().expression()
+    const args = expressionArgs.map((ea) => this.visit(ea))
+
+    return {
+      type: 'FunctionApplication',
+      name,
+      args,
+    }
+  }
+
   visit(tree: ParseTree): cTree.Expression {
     return tree.accept(this)
   }
@@ -197,7 +219,6 @@ class TypeGenerator implements CVisitor<cTree.Type> {
     }
   }
   visitTerminal(node: TerminalNode): cTree.Type {
-    console.log(node.text)
     return node.accept(this)
   }
 
@@ -243,7 +264,9 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
-  visitCompoundStatement(ctx: CompoundStatementContext): cTree.Statement {
+  visitCompoundStatement(
+    ctx: CompoundStatementContext
+  ): cTree.SequenceStatement {
     const childStatements = ctx.blockItemList()?.children
     return {
       type: 'SequenceStatement',
@@ -258,15 +281,10 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   ): cTree.FunctionDeclaration {
     const name = ctx.Identifier().text
 
-    const body = this.visit(ctx.compoundStatement())
-    console.log(JSON.stringify(body, null, 2))
-    const params = ctx.parameterList().children || []
-    const formals = params.reduce((acc: cTree.Statement[], p) => {
-      if (p.text !== ',') {
-        acc.push(p.accept(this))
-      }
-      return acc
-    }, [])
+    const body = this.visitCompoundStatement(ctx.compoundStatement())
+    const params = ctx.parameterList().parameterDeclaration()
+    const formals = params.map((p) => this.visitParameterDeclaration(p))
+
     return {
       type: 'FunctionDeclaration',
       name,
@@ -274,25 +292,13 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       formals,
     }
   }
-
-  visitFunctionApplication(
-    ctx: FunctionApplicationContext
-  ): cTree.FunctionApplication {
-    const name = ctx.Identifier().text
-
-    const expressionArgs = ctx.argumentExpressionList().children || []
-    console.log('expressionArgs', expressionArgs)
+  visitReturnStatement(ctx: ReturnStatementContext): cTree.ReturnStatement {
     return {
-      type: 'FunctionApplication',
-      name,
-      args: expressionArgs.reduce((acc: Array<cTree.Expression>, expr) => {
-        if (expr.text !== ',') {
-          acc.push(this.expressionGenerator.visit(expr))
-        }
-        return acc
-      }, []),
+      type: 'ReturnStatement',
+      value: this.expressionGenerator.visit(ctx.expression()),
     }
   }
+
   visitExpressionStatement(
     ctx: ExpressionStatementContext
   ): cTree.ExpressionStatement {
@@ -335,11 +341,13 @@ function convertExpression(expression: ExpressionContext): cTree.Expression {
 
 function convertProgram(program: ProgramContext): cTree.Program {
   const generator = new StatementGenerator()
-  const children = program.children
-  const body = children?.map((child) => child.accept(generator))
+  const functions = program.functionDeclaration()
+  // const body = children?.map((child) => child.accept(generator))
   return {
     type: 'Program',
-    body: body || [],
+    functionDeclarations: functions.map((f) =>
+      new StatementGenerator().visitFunctionDeclaration(f)
+    ),
   }
 }
 

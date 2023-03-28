@@ -19,8 +19,10 @@ GREATER_EQUAL : '>=';
 POSTFIX_ADD: '++';
 VAR_ADDRESS: '&';
 WHITESPACE: [ \r\n\t]+ -> skip;
+
 DECIMAL: [0-9]+;
 FRACTION: Fraction;
+CHAR: '\'' Nondigit '\'';
 
 
 
@@ -101,10 +103,10 @@ assignment
     : Identifier operator=assignmentOperator value=expression;
 
 
-
 expression
    : DECIMAL                                                    # Decimal
    | FRACTION                                                   # Fraction
+   | CHAR                                                       # Char
    | Identifier                                                 # Identifier
    | Pointer                                                    # Pointer
    | functionApplication                                        # Application
@@ -122,13 +124,16 @@ expression
 expressionStatement
     :   expression ';'
     ;
+
+returnStatement
+    : 'return' expression ';';
     
 statement
     :   expressionStatement
     |   declaration
     |   initialization
     |   functionDeclaration
-    |   functionApplication
+    |   returnStatement
     ;
 
 blockItemList
@@ -144,7 +149,7 @@ parameterDeclaration
     ;
     
 parameterList
-    :   typeSpecifier (',' parameterDeclaration)*
+    :   (parameterDeclaration (',' parameterDeclaration)*)?
     ;
 
 functionDeclaration
@@ -152,12 +157,12 @@ functionDeclaration
     ;
 
 argumentExpressionList
-    :   expression (',' expression)*
+    :   (expression (',' expression)*)?
     ;
     
 functionApplication
-    : Identifier '(' argumentExpressionList ')' ';'
+    : Identifier '(' argumentExpressionList ')'
     ;
 
 program 
-    : statement+;
+    : functionDeclaration+;

@@ -83,6 +83,7 @@ export interface ExpressionMap {
   VariableAddress: VariableAddress
   AssignmentExpression: AssignmentExpression
   BinaryExpression: BinaryExpression
+  FunctionApplication: FunctionApplication
   SequenceExpression: SequenceExpression
 }
 
@@ -130,7 +131,6 @@ export type VariableInitialization = {
 
 export type ParameterDeclaration = {
   type: 'ParameterDeclaration'
-  // typeSequence: SequenceType
   typeSpecifier: TypeSpecifier
   declarator: Declarator
 }
@@ -151,8 +151,8 @@ export interface StatementMap {
   VariableDeclaration: VariableDeclaration
   VariableInitialization: VariableInitialization
   ParameterDeclaration: ParameterDeclaration
+  ReturnStatement: ReturnStatement
   FunctionDeclaration: FunctionDeclaration
-  FunctionApplication: FunctionApplication
   ExpressionStatement: ExpressionStatement
   SequenceStatement: SequenceStatement
   Block: Block
@@ -166,13 +166,21 @@ export type Block = {
 export type FunctionDeclaration = {
   type: 'FunctionDeclaration'
   name: string
-  body: Statement
-  formals: Statement[]
+  body: SequenceStatement
+  formals: Array<ParameterDeclaration>
 }
 export type FunctionStorage = {
-  body: Statement
-  formals: Statement[]
+  body: SequenceStatement
+  formals: {
+    name: string
+    typeSpecifier: string
+  }[]
 }
+export type ReturnStatement = {
+  type: 'ReturnStatement'
+  value: Expression
+}
+
 export type FunctionApplication = {
   type: 'FunctionApplication'
   name: string
@@ -181,7 +189,7 @@ export type FunctionApplication = {
 
 export type Program = {
   type: 'Program'
-  body: Array<Statement>
+  functionDeclarations: FunctionDeclaration[]
 }
 
 interface NodeMap {

@@ -1,4 +1,4 @@
-import { FunctionDeclaration } from 'typescript'
+import {} from 'typescript'
 import * as cTree from '../cTree'
 import { getRandonm } from '../helpers/getRandom'
 import { Value } from '../types'
@@ -53,13 +53,7 @@ const memoryAllocateBasic = (
 ): number => {
   switch (type) {
     case 'char' || 'signed char':
-      if (typeof value == 'string') {
-        MEMORY.setInt8(freeIndex, value.charCodeAt(0))
-      } else if (typeof value === 'number') {
-        MEMORY.setInt8(freeIndex, value)
-      } else {
-        throw Error('Invalid char')
-      }
+      MEMORY.setInt8(freeIndex, value)
       return 1
 
     case 'unsigned char':
@@ -92,11 +86,7 @@ const memoryAllocateBasic = (
 
     // Floating Point types
 
-    case 'float':
-      MEMORY.setFloat32(freeIndex, value)
-      return 4
-
-    case 'double':
+    case 'float' || 'double':
       MEMORY.setFloat64(freeIndex, value)
       return 8
 
@@ -133,10 +123,7 @@ const memoryRetrieveBasic = (index: number, type: string): any => {
 
     // Floating Point types
 
-    case 'float':
-      return MEMORY.getFloat32(index)
-
-    case 'double':
+    case 'float' || 'double':
       return MEMORY.getFloat64(index)
 
     default:
@@ -165,6 +152,7 @@ let heapFree = HEAP_BOTTOM
 
 const getRandomHeapAddress = () => getRandonm(HEAP_BOTTOM, HEAP_TOP)
 
+// Program Counter
 const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   Literal: function (node: cTree.Literal) {
     return node.value
@@ -176,15 +164,21 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   AssignmentExpression: function (node: cTree.AssignmentExpression) {
+    console.log('AssignmentExpression')
     const name: string = node.name
     const { address, type } = getEnvironmentValue(name)
 
     const currentValue = memoryRetrieveBasic(address, type)
+    const newValue = actualValue(node.value)
+
     const value = evaluateAssignmentExpression(
+      node.operator || '',
       currentValue,
-      actualValue(node.value),
-      node.operator
+      newValue
     )
+    const newAddress = pushOnStack(value, type)
+
+    setEnvironmentValue(name, newAddress)
   },
 
   VariableDeclaration: function (node: cTree.VariableDeclaration) {
@@ -213,21 +207,61 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     extendEnvironment(name, address, typeSpecifier, typeQualifiers)
   },
   FunctionDeclaration(node: cTree.FunctionDeclaration) {
-    // const name = node.name
-    // CODE[name] = {
-    //   body: node.body,
-    //   formals: node.formals,
-    // }
+    const name = node.name
+    CODE[name] = {
+      body: node.body,
+      formals: node.formals.map((f) => ({
+        name: f.declarator.name,
+        typeSpecifier: f.typeSpecifier.value,
+      })),
+    }
   },
 
+  // ReturnSatement(node: cTree.ReturnStatement) {
+  //   PC += 1
+  //   return {
+  //     type: ''
+  //     value: evaluate(node.value)}
+  // },
+
   FunctionApplication(node: cTree.FunctionApplication) {
+    const frameStart = stackFree
+
     const name = node.name
     const formals = CODE[name].formals
-    const args = node.args.map((arg) => evaluate(arg))
+    const args = node.args
 
-    const new_env = {}
+    // Set new environment frame
+    ENVIRONMENT.push({})
 
-    const new_frame = {}
+    // Allocate arguments on the stack
+    formals.forEach((formal, index) => {
+      const name = formal.name
+      const typeSpecifier = formal.typeSpecifier
+      const value = evaluate(args[index])
+
+      const address = pushOnStack(value, typeSpecifier)
+      extendEnvironment(name, address, typeSpecifier, [])
+    })
+
+    // Execute body
+
+    const statements = CODE[name].body.statements
+    let result = undefined
+
+    for (const s of statements) {
+      if (s.type === 'ReturnStatement') {
+        result = evaluate(s.value)
+
+        // Remove stack frame
+        stackFree = frameStart
+        // Remove environment frame
+        ENVIRONMENT.pop()
+        return result
+      }
+      result = evaluate(s)
+    }
+    return result
   },
 
   Block(node: cTree.Block) {
@@ -274,11 +308,23 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   Program: function (node: cTree.Program) {
-    let res
-    for (const instr of node.body) {
-      res = evaluate(instr)
+    node.functionDeclarations.forEach((f) => evaluate(f))
+
+    // console.log('mainFunction', JSON.stringify(mainFunction, null, 2))
+    const program: cTree.FunctionApplication = {
+      type: 'FunctionApplication',
+      name: 'main',
+      args: [],
     }
+
+    const res = evaluate(program)
     return res
+    // throw new Error('No main function provided')
+    // let res
+    // for (const instr of node.body) {
+    //   res = evaluate(instr)
+    // }
+    // return res
   },
 }
 
