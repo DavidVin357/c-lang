@@ -118,8 +118,12 @@ switchStatement
     ;
 
 labeledStatement
-    :   'case' condition=expression ':' body=statement
-    |   'default' ':' body=statement
+    :   'case' condition=expression ':' body=statement breakStatement?
+    |   'default' ':' body=statement breakStatement?
+    ;
+
+breakStatement
+    :   'break' ';'
     ;
 
 compoundStatement

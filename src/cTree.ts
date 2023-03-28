@@ -128,6 +128,7 @@ export type LabeledStatement = {
   type: 'LabeledStatement'
   condition: Expression | null
   body: Statement
+  hasBreak: boolean
 }
 
 export type CompoundStatement = {

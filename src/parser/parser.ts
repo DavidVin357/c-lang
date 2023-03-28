@@ -276,7 +276,8 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     return {
       type: "LabeledStatement",
       condition: cast._condition ? new ExpressionGenerator().visit(cast._condition) : null,
-      body: new StatementGenerator().visit(cast._body)
+      body: new StatementGenerator().visit(cast._body),
+      hasBreak: !!cast.breakStatement()
     }
   }
 

@@ -1,9 +1,7 @@
 import * as cTree from '../cTree'
-import { Value } from '../types'
-import {
-  evaluateAssignmentExpression,
-  evaluateBinaryExpression,
-} from '../utils/operators'
+import {LabeledStatement} from '../cTree'
+import {Value} from '../types'
+import {evaluateAssignmentExpression, evaluateBinaryExpression,} from '../utils/operators'
 
 export type Evaluator<T extends cTree.Node> = (node: T) => Value
 
@@ -70,15 +68,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   SwitchStatement: function (node:cTree.SwitchStatement) {
     const condition = evaluate(node.condition)
     if (!Number.isInteger(condition)) {
-      console.error("switch expressions must be of type int or char")
+      console.error("error: switch quantity not an integer")
     }
-    // count the number of defaults
-    const defCount = 0
-    // check the condition of each labeledstatement
-    for (const caseStatement of node.body.statements) {
-      console.log(caseStatement)
-      evaluateLabeled(caseStatement, condition)
-    }
+    return evaluateSwitchBody(node.body.statements, condition)
   },
 
   Identifier: function (node: cTree.Identifier) {
@@ -111,21 +103,59 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 }
 
-export function evaluateLabeled(node: cTree.LabeledStatement, switchCon: number) {
-  if (node.condition != null) {
-    const condition = evaluate(node.condition)
-    if (condition === switchCon) {
-      console.log("evaluating...")
-      const res = evaluate(node.body)
-      return res
+export function evaluateSwitchBody(statements: Array<LabeledStatement>, switchCon: number) {
+  let defaultCount = 0
+  let defaultBody;
+
+  // for (const statement of statements) {
+  //   // handle cases
+  //   if (statement.condition != null) {
+  //     const condition = evaluate(statement.condition)
+  //     // check matching case
+  //     if (condition === switchCon) {
+  //       const res = evaluate(statement.body)
+  //       // if the statement has a break, return the result
+  //       if (statement.hasBreak) {
+  //         return res
+  //       }
+  //       // otherwise, execute until statement with break
+  //
+  //     }
+  //   }
+  for (let i = 0; i < statements.length; i++) {
+    // handle cases
+    const statement = statements[i]
+    if (statement.condition != null) {
+      const condition = evaluate(statement.condition)
+      // check matching case
+      if (condition === switchCon) {
+        const res = evaluate(statement.body)
+        // if the statement has a break, return the result
+        if (statement.hasBreak) {
+          return res
+        }
+        // otherwise, execute until statement with break
+        for (let j = i + 1; j < statements.length; j++) {
+          const statement = statements[j]
+          const res = evaluate(statement.body)
+          if (statement.hasBreak) break
+        }
+        break
+      }
+    }
+    else {
+      // default case
+      defaultCount += 1
+      if (defaultCount > 1) {
+        console.error("error: multiple default labels in one switch")
+      }
+      defaultBody = statement.body
     }
   }
-  else {
-    // default case
-    const res = evaluate(node.body)
-    return res
+  // no matching case found, execute default body
+  if (defaultBody) {
+    return evaluate(defaultBody)
   }
-
 }
 
 export function evaluate(node: cTree.Node) {

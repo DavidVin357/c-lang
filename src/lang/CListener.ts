@@ -33,6 +33,7 @@ import { ExpressionStatementContext } from "./CParser";
 import { ConditionalStatementContext } from "./CParser";
 import { SwitchStatementContext } from "./CParser";
 import { LabeledStatementContext } from "./CParser";
+import { BreakStatementContext } from "./CParser";
 import { CompoundStatementContext } from "./CParser";
 import { BlockItemListContext } from "./CParser";
 import { SwitchBodyListContext } from "./CParser";
@@ -409,6 +410,17 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitLabeledStatement?: (ctx: LabeledStatementContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.breakStatement`.
+	 * @param ctx the parse tree
+	 */
+	enterBreakStatement?: (ctx: BreakStatementContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.breakStatement`.
+	 * @param ctx the parse tree
+	 */
+	exitBreakStatement?: (ctx: BreakStatementContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.compoundStatement`.

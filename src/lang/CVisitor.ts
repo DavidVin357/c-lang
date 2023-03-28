@@ -33,6 +33,7 @@ import { ExpressionStatementContext } from "./CParser";
 import { ConditionalStatementContext } from "./CParser";
 import { SwitchStatementContext } from "./CParser";
 import { LabeledStatementContext } from "./CParser";
+import { BreakStatementContext } from "./CParser";
 import { CompoundStatementContext } from "./CParser";
 import { BlockItemListContext } from "./CParser";
 import { SwitchBodyListContext } from "./CParser";
@@ -275,6 +276,13 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitLabeledStatement?: (ctx: LabeledStatementContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.breakStatement`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBreakStatement?: (ctx: BreakStatementContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `CParser.compoundStatement`.
