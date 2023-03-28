@@ -57,20 +57,12 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   ConditionalStatement: function (node: cTree.ConditionalStatement) {
-    console.log("EVALUATING CONDITIONAL")
     const condition = evaluate(node.condition)
-    console.log("EVALUATED CONDITION")
-    console.log(condition)
     if (condition) {
-      console.log("EVALUATING TRUEBODY")
-      console.log(node.truebody.type)
       return evaluate(node.truebody)
     }
     else {
-      console.log("CHECKING ELSE VALUE")
       if (node.falsebody != null) {
-        console.log("EVALUATING FALSE BODY")
-        console.log(node.falsebody.type)
         return evaluate(node.falsebody)
       }
     }
@@ -83,7 +75,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
   },
   SequenceStatement: function (node: cTree.SequenceStatement) {
-    console.log("EVALUATING SEQUENCE OF STATEMENTS")
     let res
     for (const instr of node.statements) {
       console.log(instr.type)
@@ -92,9 +83,8 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     return res
   },
   CompoundStatement: function (node: cTree.CompoundStatement) {
-    console.log("EVALUATING COMPOUND STATEMENT")
     let res
-    for (const instr of node.statements.statements) {
+    for (const instr of node.statements) {
       console.log(instr.type)
       res = evaluate(instr)
     }

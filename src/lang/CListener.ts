@@ -31,7 +31,9 @@ import { AssignmentContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
 import { ConditionalStatementContext } from "./CParser";
+import { SwitchStatementContext } from "./CParser";
 import { CompoundStatementContext } from "./CParser";
+import { BlockItemListContext } from "./CParser";
 import { StatementContext } from "./CParser";
 import { ProgramContext } from "./CParser";
 
@@ -384,6 +386,17 @@ export interface CListener extends ParseTreeListener {
 	exitConditionalStatement?: (ctx: ConditionalStatementContext) => void;
 
 	/**
+	 * Enter a parse tree produced by `CParser.switchStatement`.
+	 * @param ctx the parse tree
+	 */
+	enterSwitchStatement?: (ctx: SwitchStatementContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.switchStatement`.
+	 * @param ctx the parse tree
+	 */
+	exitSwitchStatement?: (ctx: SwitchStatementContext) => void;
+
+	/**
 	 * Enter a parse tree produced by `CParser.compoundStatement`.
 	 * @param ctx the parse tree
 	 */
@@ -393,6 +406,17 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitCompoundStatement?: (ctx: CompoundStatementContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.blockItemList`.
+	 * @param ctx the parse tree
+	 */
+	enterBlockItemList?: (ctx: BlockItemListContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.blockItemList`.
+	 * @param ctx the parse tree
+	 */
+	exitBlockItemList?: (ctx: BlockItemListContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.statement`.

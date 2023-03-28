@@ -31,7 +31,9 @@ import { AssignmentContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
 import { ConditionalStatementContext } from "./CParser";
+import { SwitchStatementContext } from "./CParser";
 import { CompoundStatementContext } from "./CParser";
+import { BlockItemListContext } from "./CParser";
 import { StatementContext } from "./CParser";
 import { ProgramContext } from "./CParser";
 
@@ -258,11 +260,25 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitConditionalStatement?: (ctx: ConditionalStatementContext) => Result;
 
 	/**
+	 * Visit a parse tree produced by `CParser.switchStatement`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSwitchStatement?: (ctx: SwitchStatementContext) => Result;
+
+	/**
 	 * Visit a parse tree produced by `CParser.compoundStatement`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitCompoundStatement?: (ctx: CompoundStatementContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.blockItemList`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBlockItemList?: (ctx: BlockItemListContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `CParser.statement`.

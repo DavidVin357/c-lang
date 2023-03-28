@@ -113,9 +113,15 @@ export type ConditionalStatement = {
   falsebody: Statement | null
 }
 
+export type SwitchStatement = {
+  type: 'SwitchStatement'
+  condition: Expression
+  body: CompoundStatement
+}
+
 export type CompoundStatement = {
   type: 'CompoundStatement'
-  statements: SequenceStatement
+  statements: Array<Statement>
 }
 
 export interface StatementMap {

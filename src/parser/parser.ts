@@ -21,7 +21,7 @@ import {
   ModularContext,
   MultiplicationContext,
   ProgramContext,
-  SubtractionContext,
+  SubtractionContext, SwitchStatementContext,
   TypeQualifierContext,
   TypeSpecifierContext,
 } from '../lang/CParser'
@@ -234,7 +234,6 @@ class TypeGenerator implements CVisitor<cTree.Type> {
 
 class StatementGenerator implements CVisitor<cTree.Statement> {
   visitDeclaration(ctx: DeclarationContext): cTree.VariableDeclaration {
-    console.log("VISITING DECLARATION")
     const typeGenerator = new TypeGenerator()
     return {
       type: 'VariableDeclaration',
@@ -256,8 +255,15 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
+  visitSwitchStatement(ctx: SwitchStatementContext): cTree.SwitchStatement {
+    return {
+      type: 'SwitchStatement',
+      condition: new ExpressionGenerator().visit(ctx._condition),
+      body: new StatementGenerator().visitCompoundStatement(ctx.body)
+    }
+  }
+
   visitConditionalStatement(ctx: ConditionalStatementContext): cTree.ConditionalStatement {
-    console.log("VISITING CONDITIONAL STATEMENT")
     const statementGen = new StatementGenerator()
     const falsebody = ctx._falsebody ? statementGen.visit(ctx._falsebody) : null;
     return {
@@ -268,15 +274,21 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
-  visitCompoundStatement(ctx: CompoundStatementContext): cTree.CompoundStatement {
-    console.log('VISITING COMPOUND STATEMENT')
+  visitCompoundStatement(ctx: CompoundStatementContext): cTree.SequenceStatement {
+    const childStatements = ctx.blockItemList()?.children
+    console.log(childStatements)
     return {
-      type: "CompoundStatement",
-      statements: new StatementGenerator().visitChildren(ctx._statements),
-      //new StatementGenerator().visit(ctx._statements)
+      type: 'CompoundStatement'
     }
+    // return {
+    //   type: 'CompoundStatement',
+    //   body: Statement[],
+    // }
+    // return {
+    //   type: "CompoundStatement",
+    //   statements: childStatements?.map(child => this.visit(child)): [],
+    // }
   }
-
 
   visit(tree: ParseTree): cTree.Statement {
     return tree.accept(this)
@@ -284,12 +296,6 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
 
   visitChildren(node: RuleNode): cTree.SequenceStatement {
     const statements: cTree.Statement[] = []
-    // if (node.childCount == 1) {
-    //   return this.visit(node.getChild(0)) {
-    //     type: 'SequenceStatement',
-    //     this.visit(node.getChild(0)),
-    //   }
-    // }
     for (let i = 0; i < node.childCount; i++) {
       statements.push(node.getChild(i).accept(this))
     }

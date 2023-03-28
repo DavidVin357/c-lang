@@ -113,8 +113,21 @@ conditionalStatement
     :   'if' '(' condition=expression ')' truebody=statement ('else' falsebody=statement)?
     ;
 
+switchStatement
+    :   'switch' '(' condition=expression ')' body=compoundStatement
+    ;
+
+labeledStatement
+    :   'case' condition=expression ':' body=statement
+    |   'default' ':' body=statement
+    ;
+
 compoundStatement
-    :   '{' statements=statement? '}'
+    :   '{' blockItemList? '}'
+    ;
+
+blockItemList
+    :   statement+
     ;
     
 statement
@@ -122,6 +135,7 @@ statement
     |   declaration
     |   conditionalStatement
     |   compoundStatement
+    |   switchStatement
     ;
 
 program 
