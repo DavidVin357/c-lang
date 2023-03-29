@@ -4,7 +4,8 @@ import * as cTree from '../cTree'
 import {runInterpreter} from "./runner";
 
 const code = `
-int num = 9;
+int main() {
+    int num = 9;
 switch (num) {
     case 7:
         num += 7;
@@ -16,6 +17,8 @@ switch (num) {
         num += 9;
 }
 num;
+return num;
+}
 `
 
 //int num = 11;

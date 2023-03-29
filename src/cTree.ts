@@ -9,6 +9,21 @@ export type Identifier = {
   name: string
 }
 
+export type Pointer = {
+  type: 'Pointer'
+  name: string
+}
+
+export type VariableAddress = {
+  type: 'VariableAddress'
+  name: string
+}
+
+export type Declarator = {
+  type: 'Pointer' | 'Identifier'
+  name: string
+}
+
 export type AssignmentOperator =
   | '='
   | '+='
@@ -44,14 +59,14 @@ export type BinaryOperator =
 
 export type AssignmentExpression = {
   type: 'AssignmentExpression'
-  operator: string
+  operator?: string
   name: string
   value: Expression
 }
 
 export type BinaryExpression = {
   type: 'BinaryExpression'
-  operator: BinaryOperator
+  operator?: string
   left: Expression
   right: Expression
 }
@@ -61,11 +76,26 @@ export type SequenceExpression = {
   expressions: Array<Expression>
 }
 
+export type Malloc = {
+  type: 'Malloc'
+  size: Expression
+}
+
+export type SizeOf = {
+  type: 'SizeOf'
+  arg: Expression | TypeSpecifier
+}
+
 export interface ExpressionMap {
   Literal: Literal
   Identifier: Identifier
+  Declarator: Declarator
+  VariableAddress: VariableAddress
   AssignmentExpression: AssignmentExpression
   BinaryExpression: BinaryExpression
+  FunctionApplication: FunctionApplication
+  Malloc: Malloc
+  SizeOf: SizeOf
   SequenceExpression: SequenceExpression
 }
 
@@ -89,9 +119,23 @@ export type Type = TypeQualifier | TypeSpecifier | SequenceType
 // Statements
 export type VariableDeclaration = {
   type: 'VariableDeclaration'
-  typeSequence: SequenceType
-  identifier: Identifier
+  typeSpecifier: TypeSpecifier
+  typeQualifiers: SequenceType
+  declarator: Declarator
+}
+
+export type VariableInitialization = {
+  type: 'VariableInitialization'
+  typeSpecifier: TypeSpecifier
+  typeQualifiers: SequenceType
+  declarator: Declarator
   value: any
+}
+
+export type ParameterDeclaration = {
+  type: 'ParameterDeclaration'
+  typeSpecifier: TypeSpecifier
+  declarator: Declarator
 }
 
 export type Declaration = VariableDeclaration
@@ -131,27 +175,55 @@ export type LabeledStatement = {
   hasBreak: boolean
 }
 
-export type CompoundStatement = {
-  type: 'CompoundStatement'
-  statements: Array<Statement>
-}
-
 export interface StatementMap {
   VariableDeclaration: VariableDeclaration
+  VariableInitialization: VariableInitialization
   ExpressionStatement: ExpressionStatement
   SequenceStatement: SequenceStatement
   ConditionalStatement: ConditionalStatement
-  CompoundStatement: CompoundStatement
   SwitchStatement: SwitchStatement
   SwitchBodyStatement: SwitchBodyStatement
   LabeledStatement: LabeledStatement
+  ParameterDeclaration: ParameterDeclaration
+  ReturnStatement: ReturnStatement
+  FunctionDeclaration: FunctionDeclaration
+  Block: Block
 }
 
 export type Statement = StatementMap[keyof StatementMap]
 
+export type Block = {
+  type: 'Block'
+  body: SequenceStatement
+}
+
+export type FunctionDeclaration = {
+  type: 'FunctionDeclaration'
+  name: string
+  body: SequenceStatement
+  formals: Array<ParameterDeclaration>
+}
+export type FunctionStorage = {
+  body: SequenceStatement
+  formals: {
+    name: string
+    typeSpecifier: string
+  }[]
+}
+export type ReturnStatement = {
+  type: 'ReturnStatement'
+  value: Expression
+}
+
+export type FunctionApplication = {
+  type: 'FunctionApplication'
+  name: string
+  args: Array<Expression>
+}
+
 export type Program = {
   type: 'Program'
-  body: Array<Statement>
+  functionDeclarations: FunctionDeclaration[]
 }
 
 interface NodeMap {

@@ -11,17 +11,18 @@ MOD: '%';
 LOGICAL_AND: '&&';
 LOGICAL_OR: '||';
 EQUALS: '==';
+NOT_EQUALS: '!=';
 LESS : '<';
 LESS_EQUAL : '<=';
 GREATER : '>';
 GREATER_EQUAL : '>=';
 POSTFIX_ADD: '++';
-
+VAR_ADDRESS: '&';
 WHITESPACE: [ \r\n\t]+ -> skip;
+
 DECIMAL: [0-9]+;
 FRACTION: Fraction;
-
-
+CHAR: '\'' Nondigit '\'';
 
 fragment
 Nondigit
@@ -39,24 +40,32 @@ Fraction
     |   Digit '.'
     ;
 
-declarationSpecifiers
-    : declarationSpecifier+;
+//declarationSpecifiers
+//    : declarationSpecifier+;
+//
+// declarationSpecifiers
+//     : (typeQualifier | typeSpecifier)+;
 
 typeSpecifier
-    :   'void'
+ :   'void'
     |   'char'
+    |   'unsigned char'
     |   'short'
+    |   'unsigned short'
     |   'int'
+    |   'unsigned int'
     |   'long'
+    |   'unsigned long'
     |   'float'
     |   'double'
-    |   'signed'
-    |   'unsigned';
+    ;
 
 typeQualifier
     :   'const'
     |   'restrict'
     |   'volatile';
+
+typeQualifiers: (typeQualifier+)?;
 
 declarationSpecifier
     :   typeSpecifier
@@ -77,12 +86,14 @@ Pointer
         )*
     ;
 
+declarator : Pointer | Identifier;
+
 declaration
-    : specifiers=declarationSpecifiers Identifier '=' value=expression ';'
+    : qualifiers=typeQualifiers typeSpecifier declarator ';'
     ;
 
 initialization
-    : specifiers=declarationSpecifiers Identifier ';'
+    : qualifiers=typeQualifiers typeSpecifier declarator '=' value=expression ';'
     ;
 
 assignmentOperator
@@ -103,31 +114,37 @@ assignment
 //    :
 //    ;
 
-
 initializerList
-    : Digit
-    | Digit ',' initializerList
+    :   Digit
+    |   Digit ',' initializerList
+    ;
+
+malloc
+    : 'malloc' '(' size=expression ')'
+    ;
+
+sizeof
+    : 'sizeof' '('  expr=expression | type=typeSpecifier ')'
     ;
 
 expression
    : DECIMAL                                                    # Decimal
    | FRACTION                                                   # Fraction
+   | CHAR                                                       # Char
    | Identifier                                                 # Identifier
    | Pointer                                                    # Pointer
+   | functionApplication                                        # Application
    | '(' inner=expression ')'                                   # Parentheses
-   | left=expression operator=ADD right=expression              # Addition
-   | left=expression operator=SUB right=expression              # Subtraction
-   | left=expression operator=MUL right=expression              # Multiplication
-   | left=expression operator=DIV right=expression              # Division
-   | left=expression operator=MOD right=expression              # Modular
-   | left=expression operator=EQUALS right=expression           # Equal
-   | left=expression operator=GREATER right=expression          # Greater
-   | left=expression operator=GREATER_EQUAL right=expression    # GreaterEqual
-   | left=expression operator=LESS right=expression             # Less 
-   | left=expression operator=LESS_EQUAL right=expression       # LessEqual
+   | left=expression operator=(ADD | SUB) right=expression      # Additive
+   | left=expression operator=(MUL | DIV | MOD ) right=expression  # Multiplicative
+   | left=expression operator=(GREATER | GREATER_EQUAL | LESS | LESS_EQUAL) right=expression # Relational
+   | left=expression operator=(EQUALS | NOT_EQUALS) right=expression  # Equality
    | left=expression operator=LOGICAL_AND right=expression      # LogicalAnd
    | left=expression operator=LOGICAL_OR right=expression       # LogicalOr
+   | operator=VAR_ADDRESS right=Identifier                      # VarAddress
    | assignment                                                 # AssignmentExpression
+   | malloc                                                     # MallocExpression
+   | sizeof                                                     # SizeOfOperator
    ;
 
 expressionStatement
@@ -166,16 +183,42 @@ switchBodyList
 switchBodyStatement
     :   '{' switchBodyList '}'
     ;
+
+returnStatement
+    : 'return' expression ';';
     
 statement
     :   expressionStatement
     |   declaration
+    |   initialization
     |   conditionalStatement
     |   compoundStatement
     |   switchStatement
     |   labeledStatement
     |   switchBodyStatement
+    |   functionDeclaration
+    |   returnStatement
+    ;
+
+parameterDeclaration
+    :   typeSpecifier declarator
+    ;
+
+parameterList
+    :   (parameterDeclaration (',' parameterDeclaration)*)?
+    ;
+
+functionDeclaration
+    :   typeSpecifier Identifier '(' parameterList ')' compoundStatement
+    ;
+
+argumentExpressionList
+    :   (expression (',' expression)*)?
+    ;
+
+functionApplication
+    : Identifier '(' argumentExpressionList ')'
     ;
 
 program 
-    : statement+;
+    : functionDeclaration+;
