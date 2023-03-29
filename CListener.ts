@@ -1,4 +1,4 @@
-// Generated from C.g4 by ANTLR 4.9.0-SNAPSHOT
+// Generated from ./src/lang/C.g4 by ANTLR 4.9.0-SNAPSHOT
 
 
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
@@ -29,6 +29,8 @@ import { DeclarationContext } from "./CParser";
 import { InitializationContext } from "./CParser";
 import { AssignmentOperatorContext } from "./CParser";
 import { AssignmentContext } from "./CParser";
+import { ArrayInitializationContext } from "./CParser";
+import { ArrayAccessContext } from "./CParser";
 import { InitializerListContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
@@ -370,6 +372,28 @@ export interface CListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitAssignment?: (ctx: AssignmentContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.arrayInitialization`.
+	 * @param ctx the parse tree
+	 */
+	enterArrayInitialization?: (ctx: ArrayInitializationContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.arrayInitialization`.
+	 * @param ctx the parse tree
+	 */
+	exitArrayInitialization?: (ctx: ArrayInitializationContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `CParser.arrayAccess`.
+	 * @param ctx the parse tree
+	 */
+	enterArrayAccess?: (ctx: ArrayAccessContext) => void;
+	/**
+	 * Exit a parse tree produced by `CParser.arrayAccess`.
+	 * @param ctx the parse tree
+	 */
+	exitArrayAccess?: (ctx: ArrayAccessContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `CParser.initializerList`.

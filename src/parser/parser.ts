@@ -259,25 +259,24 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     return {
       type: 'SwitchStatement',
       condition: new ExpressionGenerator().visit(ctx._condition),
-      body: new StatementGenerator().visitSwitchBodyStatement(ctx._body)
+      body: this.visitSwitchBodyStatement(ctx._body)
     }
   }
 
   visitSwitchBodyStatement(ctx: SwitchBodyStatementContext): cTree.SwitchBodyStatement {
-    const childStatements = ctx.switchBodyList()?.children
+    const labeledStatements = ctx.switchBodyList().labeledStatement()
     return {
       type: "SwitchBodyStatement",
-      statements: childStatements ? childStatements.map((child) => this.visitLabeledStatement(child)) : []
+      statements: labeledStatements.map(ls => this.visitLabeledStatement(ls))
     }
   }
 
-  visitLabeledStatement(ctx: ParseTree): cTree.LabeledStatement {
-    const cast = (<LabeledStatementContext> ctx)
+  visitLabeledStatement(ctx: LabeledStatementContext): cTree.LabeledStatement {
     return {
       type: "LabeledStatement",
-      condition: cast._condition ? new ExpressionGenerator().visit(cast._condition) : null,
-      body: new StatementGenerator().visit(cast._body),
-      hasBreak: !!cast.breakStatement()
+      condition: ctx._condition ? new ExpressionGenerator().visit(ctx._condition) : null,
+      body: new StatementGenerator().visit(ctx._body),
+      hasBreak: !!ctx.breakStatement()
     }
   }
 

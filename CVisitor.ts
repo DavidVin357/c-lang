@@ -1,4 +1,4 @@
-// Generated from C.g4 by ANTLR 4.9.0-SNAPSHOT
+// Generated from ./src/lang/C.g4 by ANTLR 4.9.0-SNAPSHOT
 
 
 import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
@@ -29,6 +29,8 @@ import { DeclarationContext } from "./CParser";
 import { InitializationContext } from "./CParser";
 import { AssignmentOperatorContext } from "./CParser";
 import { AssignmentContext } from "./CParser";
+import { ArrayInitializationContext } from "./CParser";
+import { ArrayAccessContext } from "./CParser";
 import { InitializerListContext } from "./CParser";
 import { ExpressionContext } from "./CParser";
 import { ExpressionStatementContext } from "./CParser";
@@ -251,6 +253,20 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitAssignment?: (ctx: AssignmentContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.arrayInitialization`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitArrayInitialization?: (ctx: ArrayInitializationContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `CParser.arrayAccess`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitArrayAccess?: (ctx: ArrayAccessContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `CParser.initializerList`.

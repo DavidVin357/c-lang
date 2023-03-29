@@ -69,6 +69,14 @@ Identifier
         )*
     ;
 
+Pointer
+    :   '*'
+        Nondigit
+        (   Nondigit
+        |   Digit
+        )*
+    ;
+
 declaration
     : specifiers=declarationSpecifiers Identifier '=' value=expression ';'
     ;
@@ -84,11 +92,28 @@ assignmentOperator
 assignment
     : Identifier operator=assignmentOperator value=expression;
 
+//arrayInitialization
+//    :   typeSpecifier Identifier ('[' size=Digit ']')+ ';'
+//    |   typeSpecifier Identifier '[' ']' '=' '{' elements=initializerList '}' ';'
+//    |   'char' Identifier ('[' size=Digit ']')+ ';'
+//    |   typeSpecifier '(' Pointer ')'
+//    ;
+//
+//arrayAccess
+//    :
+//    ;
+
+
+initializerList
+    : Digit
+    | Digit ',' initializerList
+    ;
 
 expression
    : DECIMAL                                                    # Decimal
    | FRACTION                                                   # Fraction
    | Identifier                                                 # Identifier
+   | Pointer                                                    # Pointer
    | '(' inner=expression ')'                                   # Parentheses
    | left=expression operator=ADD right=expression              # Addition
    | left=expression operator=SUB right=expression              # Subtraction
@@ -135,11 +160,11 @@ blockItemList
     ;
 
 switchBodyList
-    :   labeledStatement+
+    :   labeledStatement*
     ;
 
 switchBodyStatement
-    :   '{' switchBodyList? '}'
+    :   '{' switchBodyList '}'
     ;
     
 statement

@@ -140,7 +140,7 @@ export function evaluateSwitchBody(statements: Array<LabeledStatement>, switchCo
           const res = evaluate(statement.body)
           if (statement.hasBreak) break
         }
-        break
+        return
       }
     }
     else {
@@ -154,6 +154,7 @@ export function evaluateSwitchBody(statements: Array<LabeledStatement>, switchCo
   }
   // no matching case found, execute default body
   if (defaultBody) {
+    console.log("evaluating default case...")
     return evaluate(defaultBody)
   }
 }
