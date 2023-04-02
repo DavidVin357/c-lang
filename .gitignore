@@ -1,8 +1,10 @@
 node_modules
+additional
 yarn.lock
 dist
 .idea
 C-Lang.iml
 yarn.lock
-lang/*
+lang
 !lang/C.g4
+.vscode
