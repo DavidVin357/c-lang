@@ -24,6 +24,7 @@ DECIMAL: [0-9]+;
 FRACTION: Fraction;
 CHAR: '\'' Nondigit '\'';
 
+
 fragment
 Nondigit
     :   [a-zA-Z_]
@@ -40,24 +41,18 @@ Fraction
     |   Digit '.'
     ;
 
-//declarationSpecifiers
-//    : declarationSpecifier+;
-//
-// declarationSpecifiers
-//     : (typeQualifier | typeSpecifier)+;
-
 typeSpecifier
- :   'void'
-    |   'char'
-    |   'unsigned char'
-    |   'short'
-    |   'unsigned short'
-    |   'int'
-    |   'unsigned int'
-    |   'long'
-    |   'unsigned long'
-    |   'float'
-    |   'double'
+ :   'void' '*'*
+    |   'char' '*'*
+    |   'unsigned char' '*'*
+    |   'short' '*'*
+    |   'unsigned short' '*'*
+    |   'int' '*'*
+    |   'unsigned int' '*'*
+    |   'long' '*'*
+    |   'unsigned long' '*'*
+    |   'float' '*'*
+    |   'double' '*'*
     ;
 
 typeQualifier
@@ -78,15 +73,17 @@ Identifier
         )*
     ;
 
-Pointer
-    :   '*'
-        Nondigit
-        (   Nondigit
-        |   Digit
-        )*
-    ;
+// Pointer
+//     :   '*'
+//         Nondigit
+//         (   Nondigit
+//         |   Digit
+//         )*
+//     ;
+pointer: 
+    '*' ('*')* Identifier;
 
-declarator : Pointer | Identifier;
+declarator :  Identifier;
 
 declaration
     : qualifiers=typeQualifiers typeSpecifier declarator ';'
@@ -101,8 +98,11 @@ assignmentOperator
     ;
 
 assignment
-    : Identifier operator=assignmentOperator value=expression;
+    : declarator operator=assignmentOperator value=expression;
 
+pointerValueAssignment
+    : pointer operator=assignmentOperator value=expression;
+    
 //arrayInitialization
 //    :   typeSpecifier Identifier ('[' size=Digit ']')+ ';'
 //    |   typeSpecifier Identifier '[' ']' '=' '{' elements=initializerList '}' ';'
@@ -114,10 +114,10 @@ assignment
 //    :
 //    ;
 
-initializerList
-    :   Digit
-    |   Digit ',' initializerList
-    ;
+// initializerList
+//     :   Digit
+//     |   Digit ',' initializerList
+//     ;
 
 malloc
     : 'malloc' '(' size=expression ')'
@@ -132,7 +132,6 @@ expression
    | FRACTION                                                   # Fraction
    | CHAR                                                       # Char
    | Identifier                                                 # Identifier
-   | Pointer                                                    # Pointer
    | functionApplication                                        # Application
    | '(' inner=expression ')'                                   # Parentheses
    | left=expression operator=(ADD | SUB) right=expression      # Additive
@@ -142,7 +141,9 @@ expression
    | left=expression operator=LOGICAL_AND right=expression      # LogicalAnd
    | left=expression operator=LOGICAL_OR right=expression       # LogicalOr
    | operator=VAR_ADDRESS right=Identifier                      # VarAddress
+   | pointer                                                    # PointerExpression 
    | assignment                                                 # AssignmentExpression
+   | pointerValueAssignment                                     # pointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
    | sizeof                                                     # SizeOfOperator
    ;

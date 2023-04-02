@@ -1,9 +1,9 @@
 import { BinaryOperator, AssignmentOperator } from '../cTree'
 
 export function evaluateBinaryExpression(
-  operator: BinaryOperator,
   left: any,
-  right: any
+  right: any,
+  operator: string
 ) {
   switch (operator) {
     case '+':

@@ -14,6 +14,12 @@ export type Pointer = {
   name: string
 }
 
+export type PointerExpression = {
+  type: 'PointerExpression'
+  name: string
+  multiplicity: number
+}
+
 export type VariableAddress = {
   type: 'VariableAddress'
   name: string
@@ -57,10 +63,17 @@ export type BinaryOperator =
   | '&'
   | '&&'
 
-export type AssignmentExpression = {
-  type: 'AssignmentExpression'
+export type Assignment = {
+  type: 'Assignment'
   operator?: string
-  name: string
+  declarator: Declarator
+  value: Expression
+}
+
+export type PointerValueAssignment = {
+  type: 'PointerValueAssignment'
+  operator?: string
+  pointer: PointerExpression
   value: Expression
 }
 
@@ -91,12 +104,14 @@ export interface ExpressionMap {
   Identifier: Identifier
   Declarator: Declarator
   VariableAddress: VariableAddress
-  AssignmentExpression: AssignmentExpression
+  Assignment: Assignment
   BinaryExpression: BinaryExpression
   FunctionApplication: FunctionApplication
   Malloc: Malloc
   SizeOf: SizeOf
   SequenceExpression: SequenceExpression
+  PointerExpression: PointerExpression
+  PointerValueAssignment: PointerValueAssignment
 }
 
 export type Expression = ExpressionMap[keyof ExpressionMap]
@@ -129,7 +144,7 @@ export type VariableInitialization = {
   typeSpecifier: TypeSpecifier
   typeQualifiers: SequenceType
   declarator: Declarator
-  value: any
+  value: Expression
 }
 
 export type ParameterDeclaration = {
@@ -199,11 +214,13 @@ export type Block = {
 
 export type FunctionDeclaration = {
   type: 'FunctionDeclaration'
+  typeSpecifier: string
   name: string
   body: SequenceStatement
   formals: Array<ParameterDeclaration>
 }
 export type FunctionStorage = {
+  typeSpecifier: string
   body: SequenceStatement
   formals: {
     name: string

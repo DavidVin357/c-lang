@@ -2,7 +2,9 @@ import { CLexer } from '../lang/CLexer'
 
 import {
   AdditiveContext,
-  AssignmentContext, CompoundStatementContext, ConditionalStatementContext,
+  AssignmentContext,
+  CompoundStatementContext,
+  ConditionalStatementContext,
   CParser,
   DecimalContext,
   DeclarationContext,
@@ -10,11 +12,13 @@ import {
   ExpressionContext,
   ExpressionStatementContext,
   FractionContext,
-  IdentifierContext, LabeledStatementContext,
+  IdentifierContext,
+  LabeledStatementContext,
   LogicalAndContext,
   LogicalOrContext,
   ProgramContext,
-  SwitchBodyStatementContext, SwitchStatementContext,
+  SwitchBodyStatementContext,
+  SwitchStatementContext,
   TypeQualifierContext,
   TypeSpecifierContext,
   EqualityContext,
@@ -24,12 +28,14 @@ import {
   InitializationContext,
   MultiplicativeContext,
   ParameterDeclarationContext,
-  PointerContext,
   RelationalContext,
   VarAddressContext,
   CharContext,
   MallocContext,
   SizeofContext,
+  PointerExpressionContext,
+  PointerContext,
+  PointerValueAssignmentContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -65,18 +71,20 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitIdentifier(ctx: IdentifierContext): cTree.Expression {
+  visitIdentifier(ctx: IdentifierContext): cTree.Identifier {
     return {
       type: 'Identifier',
       name: ctx.text,
     }
   }
-  visitPointer(ctx: PointerContext): cTree.Pointer {
-    return {
-      type: 'Pointer',
-      name: ctx.text,
-    }
-  }
+
+  // visitPointer(ctx: PointerContext): cTree.Pointer {
+  //   return {
+  //     type: 'Pointer',
+  //     name: ctx.text.replace('*', ''),
+  //   }
+  // }
+
   visitDeclarator(ctx: DeclaratorContext): cTree.Declarator {
     const name = ctx.text.replace('*', '')
     return {
@@ -143,18 +151,38 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       name: ctx.Identifier().text,
     }
   }
+  visitPointer(ctx: PointerContext): cTree.PointerExpression {
+    const pointers = ctx.MUL()
+    const name = ctx.Identifier().text
 
-  visitAssignment(ctx: AssignmentContext): cTree.Expression {
     return {
-      type: 'AssignmentExpression',
-      name: ctx.Identifier().text,
+      type: 'PointerExpression',
+      name,
+      multiplicity: pointers.length,
+    }
+  }
+  visitAssignment(ctx: AssignmentContext): cTree.Assignment {
+    return {
+      type: 'Assignment',
+      declarator: this.visitDeclarator(ctx.declarator()),
+      operator: ctx._operator.text,
+      value: this.visit(ctx._value),
+    }
+  }
+
+  visitPointerValueAssignment(
+    ctx: PointerValueAssignmentContext
+  ): cTree.Expression {
+    return {
+      type: 'PointerValueAssignment',
+      pointer: this.visitPointer(ctx.pointer()),
       operator: ctx._operator.text,
       value: this.visit(ctx._value),
     }
   }
 
   visitFunctionApplication(
-      ctx: FunctionApplicationContext
+    ctx: FunctionApplicationContext
   ): cTree.FunctionApplication {
     const name = ctx.Identifier().text
     const expressionArgs = ctx.argumentExpressionList().expression()
@@ -177,8 +205,8 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     return {
       type: 'SizeOf',
       arg: ctx._expr
-          ? this.visit(ctx._expr)
-          : new TypeGenerator().visitTypeSpecifier(ctx._type),
+        ? this.visit(ctx._expr)
+        : new TypeGenerator().visitTypeSpecifier(ctx._type),
     }
   }
 
@@ -258,7 +286,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   }
 
   visitInitialization(
-      ctx: InitializationContext
+    ctx: InitializationContext
   ): cTree.VariableInitialization {
     return {
       type: 'VariableInitialization',
@@ -279,7 +307,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   }
 
   visitParameterDeclaration(
-      ctx: ParameterDeclarationContext
+    ctx: ParameterDeclarationContext
   ): cTree.ParameterDeclaration {
     return {
       type: 'ParameterDeclaration',
@@ -291,21 +319,23 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
-  visitCompoundStatement(ctx: CompoundStatementContext): cTree.SequenceStatement {
+  visitCompoundStatement(
+    ctx: CompoundStatementContext
+  ): cTree.SequenceStatement {
     const childStatements = ctx.blockItemList()?.children
     return {
       type: 'SequenceStatement',
       statements: childStatements
-          ? childStatements.map((child) => this.visit(child))
-          : [],
+        ? childStatements.map((child) => this.visit(child))
+        : [],
     }
   }
 
   visitFunctionDeclaration(
-      ctx: FunctionDeclarationContext
+    ctx: FunctionDeclarationContext
   ): cTree.FunctionDeclaration {
     const name = ctx.Identifier().text
-
+    const typeSpecifier = ctx.typeSpecifier().text
     const body = this.visitCompoundStatement(ctx.compoundStatement())
     const params = ctx.parameterList().parameterDeclaration()
     const formals = params.map((p) => this.visitParameterDeclaration(p))
@@ -313,6 +343,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     return {
       type: 'FunctionDeclaration',
       name,
+      typeSpecifier,
       body,
       formals,
     }
@@ -329,30 +360,36 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     return {
       type: 'SwitchStatement',
       condition: new ExpressionGenerator().visit(ctx._condition),
-      body: this.visitSwitchBodyStatement(ctx._body)
+      body: this.visitSwitchBodyStatement(ctx._body),
     }
   }
 
-  visitSwitchBodyStatement(ctx: SwitchBodyStatementContext): cTree.SwitchBodyStatement {
+  visitSwitchBodyStatement(
+    ctx: SwitchBodyStatementContext
+  ): cTree.SwitchBodyStatement {
     const labeledStatements = ctx.switchBodyList().labeledStatement()
     return {
-      type: "SwitchBodyStatement",
-      statements: labeledStatements.map(ls => this.visitLabeledStatement(ls))
+      type: 'SwitchBodyStatement',
+      statements: labeledStatements.map((ls) => this.visitLabeledStatement(ls)),
     }
   }
 
   visitLabeledStatement(ctx: LabeledStatementContext): cTree.LabeledStatement {
     return {
-      type: "LabeledStatement",
-      condition: ctx._condition ? new ExpressionGenerator().visit(ctx._condition) : null,
+      type: 'LabeledStatement',
+      condition: ctx._condition
+        ? new ExpressionGenerator().visit(ctx._condition)
+        : null,
       body: new StatementGenerator().visit(ctx._body),
-      hasBreak: !!ctx.breakStatement()
+      hasBreak: !!ctx.breakStatement(),
     }
   }
 
-  visitConditionalStatement(ctx: ConditionalStatementContext): cTree.ConditionalStatement {
+  visitConditionalStatement(
+    ctx: ConditionalStatementContext
+  ): cTree.ConditionalStatement {
     const statementGen = new StatementGenerator()
-    const falsebody = ctx._falsebody ? statementGen.visit(ctx._falsebody) : null;
+    const falsebody = ctx._falsebody ? statementGen.visit(ctx._falsebody) : null
     return {
       type: 'ConditionalStatement',
       condition: new ExpressionGenerator().visit(ctx._condition),
@@ -399,7 +436,7 @@ function convertProgram(program: ProgramContext): cTree.Program {
   return {
     type: 'Program',
     functionDeclarations: functions.map((f) =>
-        new StatementGenerator().visitFunctionDeclaration(f)
+      new StatementGenerator().visitFunctionDeclaration(f)
     ),
   }
 }
