@@ -120,11 +120,11 @@ pointerValueAssignment
 malloc
     : 'malloc' '(' size=expression ')'
     ;
-
+sizeOfArgument:
+    expression | typeSpecifier;
 sizeof
-    : 'sizeof' '('  expr=expression | type=typeSpecifier ')'
+    : 'sizeof' '(' arg=sizeOfArgument ')'
     ;
-
 expression
    : DECIMAL                                                    # Decimal
    | FRACTION                                                   # Fraction
@@ -141,7 +141,7 @@ expression
    | operator=VAR_ADDRESS right=Identifier                      # VarAddress
    | pointer                                                    # PointerExpression 
    | assignment                                                 # AssignmentExpression
-   | pointerValueAssignment                                     # pointerValueAssignmentExpression
+   | pointerValueAssignment                                     # PointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
    | sizeof                                                     # SizeOfOperator
    ;

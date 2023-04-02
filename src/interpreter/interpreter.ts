@@ -87,11 +87,11 @@ const memoryAllocateBasic = (
       return 2
 
     case 'long':
-      MEMORY.setBigInt64(freeIndex, value)
+      MEMORY.setBigInt64(freeIndex, BigInt(value))
       return 8
 
     case 'unsigned long':
-      MEMORY.setBigUint64(freeIndex, value)
+      MEMORY.setBigUint64(freeIndex, BigInt(value))
       return 8
 
     // Floating Point types
@@ -129,10 +129,10 @@ const memoryRetrieveBasic = (index: number, type: string): any => {
       return MEMORY.getUint16(index)
 
     case 'long':
-      return MEMORY.getBigInt64(index)
+      return Number(MEMORY.getBigInt64(index))
 
     case 'unsigned long':
-      return MEMORY.getBigUint64(index)
+      return Number(MEMORY.getBigUint64(index))
 
     // Floating Point types
 
@@ -173,6 +173,45 @@ const allocateHeapMemory = (size: number) => {
 }
 const getRandomHeapAddress = () => getRandom(HEAP_BOTTOM, HEAP_TOP)
 
+const getTypeSize = (type: string): number => {
+  if (type.includes('*')) {
+    return 8
+  }
+
+  switch (type) {
+    case 'char' || 'signed char':
+      return 1
+
+    case 'unsigned char':
+      return 1
+
+    case 'int':
+      return 4
+
+    case 'unsigned int':
+      return 4
+
+    case 'short':
+      return 2
+
+    case 'unsigned short':
+      return 2
+
+    case 'long':
+      return 8
+
+    case 'unsigned long':
+      return 8
+
+    // Floating Point types
+
+    case 'float' || 'double':
+      return 8
+
+    default:
+      return 0
+  }
+}
 type EvaluationResult = {
   value: any
   typeSpecifier: string | null
@@ -383,13 +422,35 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     return { value: address, typeSpecifier: typeSpecifier + '*' }
   },
   Malloc: function (node: cTree.Malloc): EvaluationResult {
-    const size = evaluate(node.size)
+    const size = evaluate(node.size).value
     if (!(typeof size === 'number')) throw new Error('invalid size argument')
 
     return { value: allocateHeapMemory(size), typeSpecifier: 'void*' }
   },
 
-  SizeOf: function (node: cTree.SizeOf) {},
+  SizeOf: function (node: cTree.SizeOf) {
+    if (node.arg.type === 'typeSpecifier') {
+      return {
+        value: getTypeSize(node.arg.value),
+        typeSpecifier: 'unsigned long',
+      }
+    }
+    const { value, typeSpecifier } = actualValue(node.arg)
+    if (typeSpecifier) {
+      return {
+        value: getTypeSize(typeSpecifier),
+        typeSpecifier: 'unsigned long',
+      }
+    }
+    if (typeof value === 'number') {
+      // is Float
+      if (Number(value) === value && value % 1 !== 0)
+        return { value: 8, typeSpecifier: 'unsigned long' }
+      // is Integer
+      if (Number.isInteger(value))
+        return { value: 4, typeSpecifier: 'unsigned long' }
+    }
+  },
 
   // STATEMENTS
 

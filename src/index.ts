@@ -7,8 +7,9 @@ export function run(code: string) {
 
 const code = `
   int* a(){
-    int m = 14;
-    return &m;
+    int* b = malloc(sizeof(int));
+    *b = 15;
+    return b;
   }
 
   int f(){
@@ -17,7 +18,7 @@ const code = `
    
   int main(){
   int a = 18;
-  int* b = a();
-  return *b;
+  int* c = a();
+  return *c;
   }`
 console.log(run(code))

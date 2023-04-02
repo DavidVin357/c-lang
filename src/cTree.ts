@@ -247,6 +247,7 @@ interface NodeMap {
   Expression: Expression
   Identifier: Identifier
   Literal: Literal
+  TypeSpecifier: TypeSpecifier
   Statement: Statement
   Program: Program
 }

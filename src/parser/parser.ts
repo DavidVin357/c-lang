@@ -201,12 +201,21 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitSizeOf(ctx: SizeofContext): cTree.SizeOf {
-    return {
-      type: 'SizeOf',
-      arg: ctx._expr
-        ? this.visit(ctx._expr)
-        : new TypeGenerator().visitTypeSpecifier(ctx._type),
+  visitSizeof(ctx: SizeofContext): cTree.SizeOf {
+    const expression = ctx._arg.expression()
+    const typeSpecifier = ctx._arg.typeSpecifier()
+    if (expression) {
+      return {
+        type: 'SizeOf',
+        arg: this.visit(expression),
+      }
+    } else if (typeSpecifier) {
+      return {
+        type: 'SizeOf',
+        arg: new TypeGenerator().visitTypeSpecifier(typeSpecifier),
+      }
+    } else {
+      throw new Error('Only type or expression is accepted')
     }
   }
 
