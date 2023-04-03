@@ -2,13 +2,14 @@ import {} from 'typescript'
 import * as cTree from '../cTree'
 import { getRandom } from '../helpers/getRandom'
 import { LabeledStatement } from '../cTree'
-import { Value } from '../types'
 import {
   evaluateAssignmentExpression,
   evaluateBinaryExpression,
 } from '../utils/operators'
+import { Warning } from '../errors/warning'
+import { ErrorEvent } from '../errors/ErrorEvent'
 
-export type Evaluator<T extends cTree.Node> = (node: T) => Value
+export type Evaluator<T extends cTree.Node> = (node: T) => any
 
 // Code segment (stores function instructions)
 const CODE: { [identifier: string]: cTree.FunctionStorage } = {}
@@ -217,6 +218,15 @@ type EvaluationResult = {
   typeSpecifier: string | null
   address?: number
 }
+const dispatchWarning = (message: string) => {
+  window.dispatchEvent(
+    new CustomEvent('warning', {
+      detail: {
+        message,
+      },
+    })
+  )
+}
 const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   Literal: function (node: cTree.Literal): EvaluationResult {
     return { value: node.value, typeSpecifier: null }
@@ -250,7 +260,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       (rightType?.includes('*') || leftType.includes('*')) &&
       rightType !== leftType
     ) {
-      console.error(
+      dispatchWarning(
         `WARNING! The ${leftType} and ${rightType} are not compatible`
       )
     }
@@ -278,7 +288,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       (rightType?.includes('*') || leftType.includes('*')) &&
       rightType !== leftType
     ) {
-      console.error(
+      dispatchWarning(
         `WARNING! The ${leftType} and ${rightType} are not compatible`
       )
     }
@@ -310,7 +320,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       (leftType?.includes('*') || rightType?.includes('*')) &&
       leftType !== rightType
     ) {
-      console.log(
+      dispatchWarning(
         `WARNING! The ${leftType} and ${rightType} are not compatible`
       )
     }
@@ -352,23 +362,29 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       if (s.type === 'ReturnStatement') {
         result = actualValue(s.value)
         if (result.typeSpecifier?.includes('*') && isInStack(result.value)) {
-          console.error(`WARNING! Function returns address of local variable `)
+          dispatchWarning(
+            `WARNING! Function returns address of local variable `
+          )
         }
         // Remove stack frame
         stackFree = frameStart
         // Remove environment frame
         ENVIRONMENT.pop()
         if (result?.typeSpecifier && result.typeSpecifier !== functionType) {
-          console.error(
+          dispatchWarning(
             `returning ${result.typeSpecifier} from a function with return type ${functionType}`
           )
+
+          // dispatchWarning(
+          //   `returning ${result.typeSpecifier} from a function with return type ${functionType}`
+          // )
         }
         return result
       }
       result = evaluate(s)
     }
     if (result?.typeSpecifier && result.typeSpecifier !== functionType) {
-      console.error(
+      dispatchWarning(
         `returning ${result.typeSpecifier} from a function with return type ${functionType}`
       )
     }
@@ -394,7 +410,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     // Check if [**..]var corresponds to its [**..] type
-    if (type.split('*').length - 1 !== node.multiplicity) {
+    if (type.split('*').length - 1 < node.multiplicity) {
       throw new Error(
         `${name} of type ${type} is not compatible with ${'*'.repeat(
           node.multiplicity
@@ -450,6 +466,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       if (Number.isInteger(value))
         return { value: 4, typeSpecifier: 'unsigned long' }
     }
+    throw new Error('Invalid argument')
   },
 
   // STATEMENTS
@@ -472,7 +489,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   SwitchStatement: function (node: cTree.SwitchStatement) {
     const condition = evaluate(node.condition)
     if (!Number.isInteger(condition)) {
-      console.error('error: switch quantity not an integer')
+      throw new Error('error: switch quantity not an integer')
     }
     return evaluateSwitchBody(node.body.statements, condition)
   },
@@ -565,7 +582,7 @@ export function evaluateSwitchBody(
       // default case
       defaultCount += 1
       if (defaultCount > 1) {
-        console.error('error: multiple default labels in one switch')
+        throw new Error('error: multiple default labels in one switch')
       }
       defaultBody = statement.body
     }

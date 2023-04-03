@@ -1,8 +1,12 @@
 {
-  "name": "C-Lang",
+  "name": "c-lang",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index",
   "license": "MIT",
+  "types": "dist/index",
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "antlr4ts": "^0.5.0-alpha.4",
     "typescript": "^5.0.2"

@@ -3,22 +3,23 @@ import { runInterpreter } from './runner/runner'
 export function run(code: string) {
   return runInterpreter(code)
 }
-// export default run
+export default run
 
-const code = `
-  int* a(){
-    int* b = malloc(sizeof(int));
-    *b = 15;
-    return b;
-  }
+// const code = `
+//   int* a(){
+//     int* b = malloc(sizeof(int));
+//     *b = 15;
+//     return b;
+//   }
 
-  int f(){
-    return 5;
-  }
-   
-  int main(){
-  int a = 18;
-  int* c = a();
-  return 5 == 5;
-  }`
-console.log(run(code))
+//   int f(){
+//     return 5;
+//   }
+
+//   int main(){
+//   int a = 18;
+//   int* b = &a;
+//   int **c = &b;
+//   return *c;
+//   }`
+// console.log(run(code))
