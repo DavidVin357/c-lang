@@ -351,7 +351,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     for (const s of statements) {
       if (s.type === 'ReturnStatement') {
         result = actualValue(s.value)
-        if (result.typeSpecifier.includes('*') && isInStack(result.value)) {
+        if (result.typeSpecifier?.includes('*') && isInStack(result.value)) {
           console.error(`WARNING! Function returns address of local variable `)
         }
         // Remove stack frame

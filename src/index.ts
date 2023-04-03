@@ -19,6 +19,6 @@ const code = `
   int main(){
   int a = 18;
   int* c = a();
-  return *c;
+  return 5 == 5;
   }`
 console.log(run(code))

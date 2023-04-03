@@ -110,7 +110,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       right: this.visit(ctx._right),
     }
   }
-  visitEqual(ctx: EqualityContext): cTree.Expression {
+  visitEquality(ctx: EqualityContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
       operator: ctx._operator.text,
