@@ -1,3 +1,5 @@
+import {ArrayAccessContext} from "./lang/CParser";
+
 export type Literal = {
   type: 'Literal'
   value: string | number
@@ -71,6 +73,16 @@ export type Assignment = {
   value: Expression
 }
 
+export type ArrayAssignment = {
+  type: 'ArrayAssignment'
+  left: arrayAccess
+  index: number
+  operator?: string
+  castingType: TypeSpecifier | null
+  identifier: string
+  value: Expression
+}
+
 export type PointerValueAssignment = {
   type: 'PointerValueAssignment'
   operator?: string
@@ -105,6 +117,12 @@ export type cArray = {
   value: Expression[]
 }
 
+export type arrayAccess = {
+  type: 'ArrayAccess'
+  name: string
+  index: number
+}
+
 export interface ExpressionMap {
   Literal: Literal
   Identifier: Identifier
@@ -119,6 +137,9 @@ export interface ExpressionMap {
   PointerExpression: PointerExpression
   PointerValueAssignment: PointerValueAssignment
   cArray: cArray
+  arrayAccess: arrayAccess
+  arrayAssignment: ArrayAssignment
+
 }
 
 export type Expression = ExpressionMap[keyof ExpressionMap]
@@ -198,6 +219,14 @@ export type LabeledStatement = {
   hasBreak: boolean
 }
 
+export type ArrayDeclaration = {
+  type: 'ArrayDeclaration'
+  typeSpecifier: TypeSpecifier
+  typeQualifiers: SequenceType
+  identifier: string
+  size: number
+}
+
 export interface StatementMap {
   VariableDeclaration: VariableDeclaration
   VariableInitialization: VariableInitialization
@@ -211,6 +240,7 @@ export interface StatementMap {
   ReturnStatement: ReturnStatement
   FunctionDeclaration: FunctionDeclaration
   Block: Block
+  ArrayDeclaration: ArrayDeclaration
 }
 
 export type Statement = StatementMap[keyof StatementMap]

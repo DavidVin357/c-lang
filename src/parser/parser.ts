@@ -36,6 +36,7 @@ import {
   PointerValueAssignmentContext,
   ArrayInitializationContext,
   ArrayContext,
+  AccessContext, ArrayAccessContext, ArrayDeclarationContext, ArrayAssignmentContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -215,6 +216,31 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       throw new Error('Only type or expression is accepted')
     }
   }
+  
+  visitArrayAccess(ctx: ArrayAccessContext) : cTree.arrayAccess {
+    const index = ctx.DECIMAL().text
+    return {
+      type: 'ArrayAccess',
+      name: ctx.Identifier().text,
+      index: parseInt(index)
+    }
+  }
+
+  visitArrayAssignment(ctx: ArrayAssignmentContext): cTree.ArrayAssignment {
+    const castingType = ctx.casting()?.typeSpecifier()
+    const left = this.visitArrayAccess(ctx.arrayAccess())
+    return {
+      left: left,
+      type: 'ArrayAssignment',
+      identifier: left.name,
+      index: left.index,
+      castingType: castingType
+          ? this.typeGenerator.visitTypeSpecifier(castingType)
+          : null,
+      operator: ctx._operator.text,
+      value: this.visit(ctx._value)
+    }
+  }
 
   visit(tree: ParseTree): cTree.Expression {
     return tree.accept(this)
@@ -291,11 +317,24 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
+  visitArrayDeclaration(ctx: ArrayDeclarationContext): cTree.ArrayDeclaration {
+    return {
+      type: 'ArrayDeclaration',
+      typeSpecifier: {
+        type: 'typeSpecifier',
+        value:
+            this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()).value + '[]',
+      },
+      typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
+      identifier: ctx.Identifier().text,
+      size: parseInt(ctx.DECIMAL().text),
+    }
+  }
+
   visitInitialization(
     ctx: InitializationContext
   ): cTree.VariableInitialization {
     const castingType = ctx.casting()?.typeSpecifier()
-
     return {
       type: 'VariableInitialization',
       typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),

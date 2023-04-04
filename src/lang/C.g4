@@ -42,7 +42,7 @@ Fraction
     ;
 
 typeSpecifier
- :   'void' '*'*
+    :   'void' '*'*
     |   'char' '*'*
     |   'unsigned char' '*'*
     |   'short' '*'*
@@ -97,28 +97,21 @@ assignment
 pointerValueAssignment
     : pointer operator=assignmentOperator value=expression
     ;
-//arrayInitialization
-//    :   typeSpecifier Identifier ('[' size=Digit ']')+ ';'
-//    |   typeSpecifier Identifier '[' ']' '=' '{' elements=initializerList '}' ';'
-//    |   'char' Identifier ('[' size=Digit ']')+ ';'
-//    |   typeSpecifier '(' Pointer ')'
-//    ;
-//
-//arrayAccess
-//    :
-//    ;
 
-// initializerList
-//     :   Digit
-//     |   Digit ',' initializerList
-//     ;
 array: '{' expression (',' expression)* '}';
 
 arrayInitialization:
-    qualifiers=typeQualifiers typeSpecifier Identifier '[' size=DECIMAL ']' '=' value=expression ';';
+    qualifiers=typeQualifiers typeSpecifier Identifier '['']' '=' value=expression ';';
+
+arrayDeclaration:
+    qualifiers = typeQualifiers typeSpecifier Identifier '['size=DECIMAL']' ';';
 
 arrayAccess:
-    Identifier '[' index=DECIMAL  ']';
+    Identifier '[' DECIMAL ']';
+
+arrayAssignment:
+    arrayAccess operator=assignmentOperator casting? value=expression;
+
 malloc
     : 'malloc' '(' size=expression ')'
     ;
@@ -143,10 +136,12 @@ expression
    | operator=VAR_ADDRESS right=Identifier                      # VarAddress
    | pointer                                                    # PointerExpression 
    | assignment                                                 # AssignmentExpression
+   | arrayAssignment                                            # ArrayAssignmentExpression
    | pointerValueAssignment                                     # PointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
    | sizeof                                                     # SizeOfOperator
    | array                                                      # ArrayExpression 
+   | arrayAccess                                                # Access
    ;
 
 expressionStatement
@@ -201,6 +196,7 @@ statement
     |   functionDeclaration
     |   returnStatement
     |   arrayInitialization
+    |   arrayDeclaration
     ;
 
 parameterDeclaration
