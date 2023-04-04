@@ -12,3 +12,15 @@ int main() {
   return a[0];
 }`
 console.log(run(code))
+
+// const code = `
+// int* f(){
+//   int *arr = malloc(8);
+//   arr[0] = 5;
+//   return arr;
+// }
+
+// int main(){
+//   int* p = f();
+// }`
+// console.log(run(code))
