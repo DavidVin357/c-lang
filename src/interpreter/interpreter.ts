@@ -6,8 +6,6 @@ import {
   evaluateAssignmentExpression,
   evaluateBinaryExpression,
 } from '../utils/operators'
-import { Warning } from '../errors/warning'
-import { ErrorEvent } from '../errors/ErrorEvent'
 
 export type Evaluator<T extends cTree.Node> = (node: T) => any
 
@@ -31,10 +29,6 @@ const extendEnvironment = (
   const lastIndex = ENVIRONMENT.length - 1
   ENVIRONMENT[lastIndex][name] = { address, typeSpecifier, typeQualifiers }
 }
-const setEnvironmentValue = (name: string, address: number) => {
-  const lastIndex = ENVIRONMENT.length - 1
-  ENVIRONMENT[lastIndex][name].address = address
-}
 
 const getEnvironmentValue = (name: string) => {
   for (let i = ENVIRONMENT.length - 1; i >= 0; i--) {
@@ -47,6 +41,7 @@ const getEnvironmentValue = (name: string) => {
     typeQualifiers: null,
   }
 }
+
 // C program memory
 const megabyte = 2 ** 20
 const buffer = new ArrayBuffer(20 * megabyte)
@@ -174,6 +169,7 @@ const allocateHeapMemory = (size: number) => {
 }
 const getRandomHeapAddress = () => getRandom(HEAP_BOTTOM, HEAP_TOP)
 
+// Interpreter helpers
 const getTypeSize = (type: string): number => {
   if (type.includes('*')) {
     return 8
@@ -219,14 +215,21 @@ type EvaluationResult = {
   address?: number
 }
 const dispatchWarning = (message: string) => {
-  window.dispatchEvent(
-    new CustomEvent('warning', {
-      detail: {
-        message,
-      },
-    })
-  )
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('warning', {
+        detail: {
+          message,
+        },
+      })
+    )
+  } else {
+    console.log('Warning:')
+    console.warn(message)
+  }
 }
+
+// EVALUATOR
 const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   Literal: function (node: cTree.Literal): EvaluationResult {
     return { value: node.value, typeSpecifier: null }
@@ -241,7 +244,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   VariableDeclaration: function (node: cTree.VariableDeclaration) {
-    const name = node.declarator.name
+    const name = node.identifier
     const typeSpecifier = node.typeSpecifier.value
     const typeQualifiers = node.typeQualifiers.value.map(
       (t: cTree.TypeQualifier) => t.value
@@ -252,16 +255,21 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   VariableInitialization: function (node: cTree.VariableInitialization) {
-    const name = node.declarator.name
+    const name = node.identifier
     const leftType = node.typeSpecifier.value
-    const { value, typeSpecifier: rightType } = actualValue(node.value)
+    let { typeSpecifier: rightType, value } = actualValue(node.value)
+
+    // Casting of types
+    if (node.castingType) {
+      rightType = node.castingType.value
+    }
 
     if (
       (rightType?.includes('*') || leftType.includes('*')) &&
       rightType !== leftType
     ) {
       dispatchWarning(
-        `WARNING! The ${leftType} and ${rightType} are not compatible`
+        `initialization of ${leftType} from incompatible pointer type ${rightType}`
       )
     }
 
@@ -273,14 +281,19 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   Assignment: function (node: cTree.Assignment) {
-    const name: string = node.declarator.name
+    const name: string = node.identifier
 
     const { address: leftAddress, typeSpecifier: leftType } =
       getEnvironmentValue(name)
 
-    const { typeSpecifier: rightType, value: rightValue } = actualValue(
+    let { typeSpecifier: rightType, value: rightValue } = actualValue(
       node.value
     )
+
+    // Casting of types
+    if (node.castingType) {
+      rightType = node.castingType.value
+    }
 
     const leftValue = memoryRetrieveBasic(leftAddress, leftType)
 
@@ -289,7 +302,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       rightType !== leftType
     ) {
       dispatchWarning(
-        `WARNING! The ${leftType} and ${rightType} are not compatible`
+        `assignment to ${leftType} from incompatible pointer type ${rightType}`
       )
     }
 
@@ -321,7 +334,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       leftType !== rightType
     ) {
       dispatchWarning(
-        `WARNING! The ${leftType} and ${rightType} are not compatible`
+        `assignment to ${leftType} from incompatible pointer type ${rightType}`
       )
     }
 
@@ -362,9 +375,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       if (s.type === 'ReturnStatement') {
         result = actualValue(s.value)
         if (result.typeSpecifier?.includes('*') && isInStack(result.value)) {
-          dispatchWarning(
-            `WARNING! Function returns address of local variable `
-          )
+          dispatchWarning(`function returns address of local variable `)
         }
         // Remove stack frame
         stackFree = frameStart
@@ -374,10 +385,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
           dispatchWarning(
             `returning ${result.typeSpecifier} from a function with return type ${functionType}`
           )
-
-          // dispatchWarning(
-          //   `returning ${result.typeSpecifier} from a function with return type ${functionType}`
-          // )
         }
         return result
       }
@@ -516,9 +523,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     CODE[name] = {
       typeSpecifier,
       body: node.body,
-      formals: node.formals.map((f) => ({
-        name: f.declarator.name,
-        typeSpecifier: f.typeSpecifier.value,
+      formals: node.formals.map((formal) => ({
+        name: formal.identifier,
+        typeSpecifier: formal.typeSpecifier.value,
       })),
     }
   },

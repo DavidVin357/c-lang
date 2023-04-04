@@ -8,7 +8,6 @@ import {
   CParser,
   DecimalContext,
   DeclarationContext,
-  DeclaratorContext,
   ExpressionContext,
   ExpressionStatementContext,
   FractionContext,
@@ -33,7 +32,6 @@ import {
   CharContext,
   MallocContext,
   SizeofContext,
-  PointerExpressionContext,
   PointerContext,
   PointerValueAssignmentContext,
 } from '../lang/CParser'
@@ -47,6 +45,7 @@ import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { CharStreams, CommonTokenStream } from 'antlr4ts'
 
 class ExpressionGenerator implements CVisitor<cTree.Expression> {
+  typeGenerator = new TypeGenerator()
   visitDecimal(ctx: DecimalContext): cTree.Expression {
     return {
       type: 'Literal',
@@ -75,21 +74,6 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     return {
       type: 'Identifier',
       name: ctx.text,
-    }
-  }
-
-  // visitPointer(ctx: PointerContext): cTree.Pointer {
-  //   return {
-  //     type: 'Pointer',
-  //     name: ctx.text.replace('*', ''),
-  //   }
-  // }
-
-  visitDeclarator(ctx: DeclaratorContext): cTree.Declarator {
-    const name = ctx.text.replace('*', '')
-    return {
-      type: ctx.text.startsWith('*') ? 'Pointer' : 'Identifier',
-      name,
     }
   }
 
@@ -162,9 +146,13 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
   visitAssignment(ctx: AssignmentContext): cTree.Assignment {
+    const castingType = ctx.casting()?.typeSpecifier()
     return {
       type: 'Assignment',
-      declarator: this.visitDeclarator(ctx.declarator()),
+      identifier: ctx.Identifier().text,
+      castingType: castingType
+        ? this.typeGenerator.visitTypeSpecifier(castingType)
+        : null,
       operator: ctx._operator.text,
       value: this.visit(ctx._value),
     }
@@ -212,7 +200,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     } else if (typeSpecifier) {
       return {
         type: 'SizeOf',
-        arg: new TypeGenerator().visitTypeSpecifier(typeSpecifier),
+        arg: this.typeGenerator.visitTypeSpecifier(typeSpecifier),
       }
     } else {
       throw new Error('Only type or expression is accepted')
@@ -290,18 +278,23 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       type: 'VariableDeclaration',
       typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
       typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
-      declarator: this.expressionGenerator.visitDeclarator(ctx.declarator()),
+      identifier: ctx.Identifier().text,
     }
   }
 
   visitInitialization(
     ctx: InitializationContext
   ): cTree.VariableInitialization {
+    const castingType = ctx.casting()?.typeSpecifier()
+
     return {
       type: 'VariableInitialization',
       typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
       typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
-      declarator: this.expressionGenerator.visitDeclarator(ctx.declarator()),
+      castingType: castingType
+        ? this.typeGenerator.visitTypeSpecifier(castingType)
+        : null,
+      identifier: ctx.Identifier().text,
       value: this.expressionGenerator.visit(ctx._value),
     }
   }
@@ -321,10 +314,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     return {
       type: 'ParameterDeclaration',
       typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
-      // typeSequence: this.typeGenerator.visitChildren(
-      //   ctx.declarationSpecifiers()
-      // ),
-      declarator: this.expressionGenerator.visitDeclarator(ctx.declarator()),
+      identifier: ctx.Identifier().text,
     }
   }
 

@@ -66,7 +66,8 @@ export type BinaryOperator =
 export type Assignment = {
   type: 'Assignment'
   operator?: string
-  declarator: Declarator
+  castingType: TypeSpecifier | null
+  identifier: string
   value: Expression
 }
 
@@ -136,21 +137,22 @@ export type VariableDeclaration = {
   type: 'VariableDeclaration'
   typeSpecifier: TypeSpecifier
   typeQualifiers: SequenceType
-  declarator: Declarator
+  identifier: string
 }
 
 export type VariableInitialization = {
   type: 'VariableInitialization'
   typeSpecifier: TypeSpecifier
   typeQualifiers: SequenceType
-  declarator: Declarator
+  castingType: TypeSpecifier | null
+  identifier: string
   value: Expression
 }
 
 export type ParameterDeclaration = {
   type: 'ParameterDeclaration'
   typeSpecifier: TypeSpecifier
-  declarator: Declarator
+  identifier: string
 }
 
 export type Declaration = VariableDeclaration

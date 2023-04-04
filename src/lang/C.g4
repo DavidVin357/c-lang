@@ -73,34 +73,30 @@ Identifier
         )*
     ;
 
-// Pointer
-//     :   '*'
-//         Nondigit
-//         (   Nondigit
-//         |   Digit
-//         )*
-//     ;
 pointer: 
     '*' ('*')* Identifier;
 
-declarator :  Identifier;
-
 declaration
-    : qualifiers=typeQualifiers typeSpecifier declarator ';'
+    : qualifiers=typeQualifiers typeSpecifier Identifier ';'
     ;
 
 initialization
-    : qualifiers=typeQualifiers typeSpecifier declarator '=' value=expression ';'
+    : qualifiers=typeQualifiers typeSpecifier Identifier '=' casting? value=expression ';'
     ;
 
 assignmentOperator
     :   '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='
     ;
+casting: '(' typeSpecifier ')';
 
 assignment
-    : declarator operator=assignmentOperator value=expression;
+    : Identifier operator=assignmentOperator casting? value=expression
+    ;
+
+// e.g., *h = 43
 pointerValueAssignment
-    : pointer operator=assignmentOperator value=expression;
+    : pointer operator=assignmentOperator value=expression
+    ;
 //arrayInitialization
 //    :   typeSpecifier Identifier ('[' size=Digit ']')+ ';'
 //    |   typeSpecifier Identifier '[' ']' '=' '{' elements=initializerList '}' ';'
@@ -200,7 +196,7 @@ statement
     ;
 
 parameterDeclaration
-    :   typeSpecifier declarator
+    :   typeSpecifier Identifier
     ;
 
 parameterList

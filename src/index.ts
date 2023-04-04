@@ -5,21 +5,21 @@ export function run(code: string) {
 }
 export default run
 
-// const code = `
-//   int* a(){
-//     int* b = malloc(sizeof(int));
-//     *b = 15;
-//     return b;
-//   }
+const code = `
+  int* a(){
+    int* b = (float *) malloc(sizeof(int));
+    *b = 15;
+    return b;
+  }
 
-//   int f(){
-//     return 5;
-//   }
+  int f(){
+    return 5;
+  }
 
-//   int main(){
-//   int a = 18;
-//   int* b = &a;
-//   int **c = &b;
-//   return *c;
-//   }`
-// console.log(run(code))
+  int main(){
+  int a = 18;
+  int* b = a();
+
+  return *b;
+  }`
+console.log(run(code))
