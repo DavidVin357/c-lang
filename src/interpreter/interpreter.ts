@@ -164,7 +164,7 @@ const pushOnStack = (value: any, type: string) => {
 const getRandomStackAddress = () => getRandom(STACK_BOTTOM, STACK_TOP)
 
 const isInStack = (address: number) => {
-  return STACK_BOTTOM < address && address < STACK_TOP
+  return STACK_BOTTOM <= address && address < STACK_TOP
 }
 // HEAP Operations
 const HEAP_TOP = buffer.byteLength / 2
@@ -252,6 +252,15 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
   },
 
+  ParenthesesExpression: function (
+    node: cTree.ParenthesesExpression
+  ): EvaluationResult {
+    return {
+      value: actualValue(node.value).value,
+      typeSpecifier: null,
+    }
+  },
+
   VariableDeclaration: function (node: cTree.VariableDeclaration) {
     const name = node.identifier
     const typeSpecifier = node.typeSpecifier.value
@@ -283,6 +292,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     if (
       (rightType?.includes('*') || leftType.includes('*')) &&
+      !rightType?.includes('void') &&
       rightType !== leftType
     ) {
       dispatchWarning(
@@ -316,6 +326,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     if (
       (rightType?.includes('*') || leftType.includes('*')) &&
+      !rightType?.includes('void') &&
       rightType !== leftType
     ) {
       dispatchWarning(
@@ -348,6 +359,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     if (
       (leftType?.includes('*') || rightType?.includes('*')) &&
+      !rightType?.includes('void') &&
       leftType !== rightType
     ) {
       dispatchWarning(

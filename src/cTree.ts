@@ -84,6 +84,10 @@ export type BinaryExpression = {
   left: Expression
   right: Expression
 }
+export type ParenthesesExpression = {
+  type: 'ParenthesesExpression'
+  value: Expression
+}
 
 export type SequenceExpression = {
   type: 'SequenceExpression'
@@ -112,6 +116,7 @@ export interface ExpressionMap {
   VariableAddress: VariableAddress
   Assignment: Assignment
   BinaryExpression: BinaryExpression
+  ParenthesesExpression: ParenthesesExpression
   FunctionApplication: FunctionApplication
   Malloc: Malloc
   SizeOf: SizeOf

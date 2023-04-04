@@ -36,6 +36,7 @@ import {
   PointerValueAssignmentContext,
   ArrayInitializationContext,
   ArrayContext,
+  ParenthesesContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -112,7 +113,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitGreater(ctx: RelationalContext): cTree.Expression {
+  visitRelational(ctx: RelationalContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
       operator: ctx._operator.text,
@@ -120,6 +121,14 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       right: this.visit(ctx._right),
     }
   }
+
+  visitParentheses(ctx: ParenthesesContext): cTree.ParenthesesExpression {
+    return {
+      type: 'ParenthesesExpression',
+      value: this.visit(ctx._inner),
+    }
+  }
+
   visitLogicalAnd(ctx: LogicalAndContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
