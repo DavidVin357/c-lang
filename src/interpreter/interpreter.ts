@@ -57,6 +57,14 @@ const memoryAllocateBasic = (
     return 8
   }
 
+  if (type.includes('[]')) {
+    let size = 0
+    value.forEach((v: []) => {
+      size += memoryAllocateBasic(v, type.replace('[]', ''), freeIndex)
+    })
+    return size
+  }
+
   switch (type) {
     case 'char' || 'signed char':
       MEMORY.setInt8(freeIndex, value)
@@ -105,6 +113,7 @@ const memoryRetrieveBasic = (index: number, type: string): any => {
   if (type.includes('*')) {
     return MEMORY.getFloat64(index)
   }
+
   switch (type) {
     case 'char' || 'signed char':
       return String.fromCharCode(MEMORY.getInt8(index))
@@ -253,6 +262,14 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const address = pushOnStack(null, typeSpecifier)
     extendEnvironment(name, address, typeSpecifier, typeQualifiers)
   },
+  Array: function (node: cTree.cArray) {
+    const value = node.value.map((e) => evaluate(e))
+
+    return {
+      typeSpecifier: 'array',
+      value,
+    }
+  },
 
   VariableInitialization: function (node: cTree.VariableInitialization) {
     const name = node.identifier
@@ -400,9 +417,16 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
   Identifier: function (node: cTree.Identifier): EvaluationResult {
     const name = node.name
-
     const address = getEnvironmentValue(name).address
+
     const typeSpecifier = getEnvironmentValue(name).typeSpecifier
+
+    if (typeSpecifier.includes('[]'))
+      return {
+        value: address,
+        typeSpecifier: typeSpecifier.replace('[]', '') + '*',
+      }
+
     return { value: memoryRetrieveBasic(address, typeSpecifier), typeSpecifier }
   },
 

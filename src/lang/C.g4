@@ -112,7 +112,13 @@ pointerValueAssignment
 //     :   Digit
 //     |   Digit ',' initializerList
 //     ;
+array: '{' expression (',' expression)* '}';
 
+arrayInitialization:
+    qualifiers=typeQualifiers typeSpecifier Identifier '[' size=DECIMAL ']' '=' value=expression ';';
+
+arrayAccess:
+    Identifier '[' index=DECIMAL  ']';
 malloc
     : 'malloc' '(' size=expression ')'
     ;
@@ -140,6 +146,7 @@ expression
    | pointerValueAssignment                                     # PointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
    | sizeof                                                     # SizeOfOperator
+   | array                                                      # ArrayExpression 
    ;
 
 expressionStatement
@@ -193,6 +200,7 @@ statement
     |   switchBodyStatement
     |   functionDeclaration
     |   returnStatement
+    |   arrayInitialization
     ;
 
 parameterDeclaration

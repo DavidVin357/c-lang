@@ -6,20 +6,13 @@ export function run(code: string) {
 export default run
 
 const code = `
-  int* a(){
-    int* b = (float *) malloc(sizeof(int));
-    *b = 15;
-    return b;
-  }
-
-  int f(){
-    return 5;
-  }
-
-  int main(){
-  int a = 18;
-  int* b = a();
-
-  return *b;
-  }`
+int* f(){
+  int *arr = malloc(8); 
+  arr[0] = 5;
+  return arr;
+}
+ 
+int main(){
+  int* p = f();
+}`
 console.log(run(code))

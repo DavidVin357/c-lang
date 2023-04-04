@@ -34,6 +34,8 @@ import {
   SizeofContext,
   PointerContext,
   PointerValueAssignmentContext,
+  ArrayInitializationContext,
+  ArrayContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -67,6 +69,13 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       type: 'Literal',
       value: ctx.text.replace("'", '').charCodeAt(0),
       raw: ctx.text,
+    }
+  }
+
+  visitArray(ctx: ArrayContext): cTree.cArray {
+    return {
+      type: 'Array',
+      value: ctx.expression().map((e) => this.visit(e)),
     }
   }
 
@@ -294,6 +303,24 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       castingType: castingType
         ? this.typeGenerator.visitTypeSpecifier(castingType)
         : null,
+      identifier: ctx.Identifier().text,
+      value: this.expressionGenerator.visit(ctx._value),
+    }
+  }
+
+  visitArrayInitialization(
+    ctx: ArrayInitializationContext
+  ): cTree.VariableInitialization {
+    return {
+      type: 'VariableInitialization',
+      typeSpecifier: {
+        type: 'typeSpecifier',
+        value:
+          this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()).value +
+          '[]',
+      },
+      typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
+      castingType: null,
       identifier: ctx.Identifier().text,
       value: this.expressionGenerator.visit(ctx._value),
     }

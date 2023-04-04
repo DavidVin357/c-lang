@@ -100,6 +100,11 @@ export type SizeOf = {
   arg: Expression | TypeSpecifier
 }
 
+export type cArray = {
+  type: 'Array'
+  value: Expression[]
+}
+
 export interface ExpressionMap {
   Literal: Literal
   Identifier: Identifier
@@ -113,6 +118,7 @@ export interface ExpressionMap {
   SequenceExpression: SequenceExpression
   PointerExpression: PointerExpression
   PointerValueAssignment: PointerValueAssignment
+  cArray: cArray
 }
 
 export type Expression = ExpressionMap[keyof ExpressionMap]
