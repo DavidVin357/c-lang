@@ -60,7 +60,11 @@ const memoryAllocateBasic = (
     let size = 0
     value.forEach((v: any) => {
       const valueType = type.replace('[]', '')
-      size += memoryAllocateBasic(v.value, valueType, freeIndex += getTypeSize(valueType))
+      size += memoryAllocateBasic(
+        v.value,
+        valueType,
+        (freeIndex += getTypeSize(valueType))
+      )
     })
     return size
   }
@@ -166,15 +170,61 @@ const isInStack = (address: number) => {
   return STACK_BOTTOM <= address && address < STACK_TOP
 }
 // HEAP Operations
+class HeapMemoryNode {
+  constructor(start: number, end: number, next: any) {
+    this.start = start
+    this.end = end
+    this.next = next
+  }
+  start: number = HEAP_BOTTOM
+  end: number = HEAP_TOP
+  next = null
+}
+
 const HEAP_TOP = buffer.byteLength / 2
 const HEAP_BOTTOM = 0
-let heapFree = HEAP_BOTTOM
+let heapFreeNode = new HeapMemoryNode(HEAP_BOTTOM, HEAP_TOP, null)
 
-const allocateHeapMemory = (size: number) => {
-  const address = heapFree
-  heapFree += size
-  return address
+const isInHeap = (address: number) => {
+  return HEAP_BOTTOM <= address && address < HEAP_TOP
 }
+
+const allocateHeapMemory = (size: number, node: any): number => {
+  if (node == null) {
+    throw Error('No heap memory available')
+  }
+  if (node.end - node.start < size) {
+    return allocateHeapMemory(size, node.next)
+  } else if (node.end - node.start === size) {
+    heapFreeNode = node.next
+
+    return node.start
+  } else {
+    const address = node.start
+    node.start += size
+
+    return address
+  }
+}
+
+const freeMemory = (address: number, type: string) => {
+  if (!isInHeap(address)) {
+    throw Error('provided pointer is not in the heap!')
+  }
+  let size = getTypeSize(type)
+  let memoryNode
+  if (heapFreeNode.start === address + size) {
+    memoryNode = new HeapMemoryNode(
+      address,
+      heapFreeNode.end,
+      heapFreeNode.next
+    )
+  } else {
+    memoryNode = new HeapMemoryNode(address, address + size, heapFreeNode)
+  }
+  heapFreeNode = memoryNode
+}
+
 const getRandomHeapAddress = () => getRandom(HEAP_BOTTOM, HEAP_TOP)
 
 // Interpreter helpers
@@ -278,7 +328,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     const address = pushOnStack(null, typeSpecifier)
     extendEnvironment(name, address, typeSpecifier, typeQualifiers)
-    console.log(ENVIRONMENT)
   },
 
   ArrayDeclaration: function (node: cTree.ArrayDeclaration) {
@@ -290,11 +339,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       value.push(0)
     }
     const typeQualifiers = node.typeQualifiers.value.map(
-        (t: cTree.TypeQualifier) => t.value
+      (t: cTree.TypeQualifier) => t.value
     )
     const address = pushOnStack(value, type)
     extendEnvironment(name, address, type, typeQualifiers)
-    console.log(ENVIRONMENT)
   },
 
   VariableInitialization: function (node: cTree.VariableInitialization) {
@@ -321,13 +369,15 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     )
     const address = pushOnStack(value, leftType)
     extendEnvironment(name, address, leftType, typeQualifiers)
-    console.log(ENVIRONMENT)
   },
 
   Assignment: function (node: cTree.Assignment) {
     const name: string = node.identifier
-    const { address: leftAddress, typeSpecifier: leftType } = getEnvironmentValue(name)
-    let { typeSpecifier: rightType, value: rightValue } = actualValue(node.value)
+    const { address: leftAddress, typeSpecifier: leftType } =
+      getEnvironmentValue(name)
+    let { typeSpecifier: rightType, value: rightValue } = actualValue(
+      node.value
+    )
 
     // Casting of types
     if (node.castingType) {
@@ -357,11 +407,14 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
   ArrayAssignment: function (node: cTree.ArrayAssignment) {
     const name = node.identifier
-    const { address: arrStart, typeSpecifier: arrType } = getEnvironmentValue(name)
-    const {typeSpecifier: leftType, value: leftValue} = actualValue(node.left)
+    const { address: arrStart, typeSpecifier: arrType } =
+      getEnvironmentValue(name)
+    const { typeSpecifier: leftType, value: leftValue } = actualValue(node.left)
     const index = node.index
     const addr = arrStart + (node.index + 1) * getTypeSize(leftType)
-    let { typeSpecifier: rightType, value: rightValue } = actualValue(node.value)
+    let { typeSpecifier: rightType, value: rightValue } = actualValue(
+      node.value
+    )
 
     // Casting of types
     if (node.castingType) {
@@ -369,18 +422,18 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     if (
-        (rightType?.includes('*') || leftType.includes('*')) &&
-        rightType !== leftType
+      (rightType?.includes('*') || leftType.includes('*')) &&
+      rightType !== leftType
     ) {
       dispatchWarning(
-          `assignment to ${leftType} from incompatible pointer type ${rightType}`
+        `assignment to ${leftType} from incompatible pointer type ${rightType}`
       )
     }
 
     const value = evaluateAssignmentExpression(
-        node.operator || '',
-        leftValue,
-        rightValue
+      node.operator || '',
+      leftValue,
+      rightValue
     )
 
     memoryAllocateBasic(value, leftType, addr)
@@ -527,7 +580,30 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const size = evaluate(node.size).value
     if (!(typeof size === 'number')) throw new Error('invalid size argument')
 
-    return { value: allocateHeapMemory(size), typeSpecifier: 'void*' }
+    return {
+      value: allocateHeapMemory(size, heapFreeNode),
+      typeSpecifier: 'void*',
+    }
+  },
+
+  Free: function (node: cTree.Free): void {
+    const envValue = getEnvironmentValue(node.name)
+    const typeSpecifier = envValue.typeSpecifier
+    const pointerAddress = envValue.address
+
+    const address = memoryRetrieveBasic(pointerAddress, typeSpecifier)
+    freeMemory(address, typeSpecifier.slice(0, -1))
+
+    const lastIndex = ENVIRONMENT.length - 1
+
+    delete ENVIRONMENT[lastIndex][node.name]
+
+    for (let key in ENVIRONMENT[lastIndex]) {
+      if (ENVIRONMENT[lastIndex][key].address === address) {
+        delete ENVIRONMENT[lastIndex][key]
+      }
+    }
+    console.log('new env: ', ENVIRONMENT)
   },
 
   SizeOf: function (node: cTree.SizeOf) {
@@ -555,16 +631,22 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     throw new Error('Invalid argument')
   },
 
-  ArrayAccess: function(node:cTree.arrayAccess) {
+  PrintHeap: function (node: cTree.PrintHeap) {
+    printHeap()
+  },
+
+  ArrayAccess: function (node: cTree.arrayAccess) {
     const name = node.name
-    const { address: arrStart, typeSpecifier: arrType } = getEnvironmentValue(name)
+    const { address: arrStart, typeSpecifier: arrType } =
+      getEnvironmentValue(name)
     const type = arrType.replace('[]', '')
     const typeSize = getTypeSize(type)
     const idx = arrStart + (node.index + 1) * typeSize
     // retrieve memory using the memoryRetrieveBasic
     const value = memoryRetrieveBasic(idx, type)
     return {
-      value, typeSpecifier: type
+      value,
+      typeSpecifier: type,
     }
   },
 
@@ -691,6 +773,34 @@ export function evaluateSwitchBody(
     console.log('evaluating default case...')
     return evaluate(defaultBody)
   }
+}
+
+const printHeap = () => {
+  const nodes = []
+  for (let frame of ENVIRONMENT) {
+    console.log('frame', frame)
+    const pointers = Object.values(frame).filter((v) =>
+      v.typeSpecifier.includes('*')
+    )
+
+    for (const p of pointers) {
+      const address = memoryRetrieveBasic(p.address, p.typeSpecifier)
+      if (isInHeap(address)) {
+        const type = p.typeSpecifier.slice(0, -1)
+        const value = memoryRetrieveBasic(address, type)
+        // const addressString = `address: ${node.address} |\n`
+        // const typeString = `type: ${node.type} |\n`
+        // const valueString = `value: ${node.address} |\n`
+        const heapNode = {
+          address,
+          type,
+          value,
+        }
+        nodes.push(heapNode)
+      }
+    }
+  }
+  console.table(nodes.sort((a, b) => a.address - b.address))
 }
 
 export function evaluate(node: cTree.Node) {

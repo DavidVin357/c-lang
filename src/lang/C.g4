@@ -115,11 +115,18 @@ arrayAssignment:
 malloc
     : 'malloc' '(' size=expression ')'
     ;
+
 sizeOfArgument:
     expression | typeSpecifier;
 sizeof
     : 'sizeof' '(' arg=sizeOfArgument ')'
     ;
+
+free: 
+    'free' '(' Identifier ')';
+
+printHeap: 'print_heap' '(' ')' ';';
+
 expression
    : DECIMAL                                                    # Decimal
    | FRACTION                                                   # Fraction
@@ -140,6 +147,7 @@ expression
    | pointerValueAssignment                                     # PointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
    | sizeof                                                     # SizeOfOperator
+   | free                                                       # FreeExpression
    | array                                                      # ArrayExpression 
    | arrayAccess                                                # Access
    ;
@@ -197,6 +205,7 @@ statement
     |   returnStatement
     |   arrayInitialization
     |   arrayDeclaration
+    |   printHeap
     ;
 
 parameterDeclaration
