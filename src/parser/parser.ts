@@ -36,8 +36,13 @@ import {
   PointerValueAssignmentContext,
   ArrayInitializationContext,
   ArrayContext,
-  AccessContext, ArrayAccessContext, ArrayDeclarationContext, ArrayAssignmentContext,
+  AccessContext,
+  ArrayAccessContext,
+  ArrayDeclarationContext,
+  ArrayAssignmentContext,
   ParenthesesContext,
+  FreeContext,
+  PrintHeapContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -208,6 +213,14 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
+  visitFree(ctx: FreeContext): cTree.Free {
+    const name = ctx.Identifier().text
+    return {
+      type: 'Free',
+      name,
+    }
+  }
+
   visitSizeof(ctx: SizeofContext): cTree.SizeOf {
     const expression = ctx._arg.expression()
     const typeSpecifier = ctx._arg.typeSpecifier()
@@ -225,13 +238,13 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       throw new Error('Only type or expression is accepted')
     }
   }
-  
-  visitArrayAccess(ctx: ArrayAccessContext) : cTree.arrayAccess {
+
+  visitArrayAccess(ctx: ArrayAccessContext): cTree.arrayAccess {
     const index = ctx.DECIMAL().text
     return {
       type: 'ArrayAccess',
       name: ctx.Identifier().text,
-      index: parseInt(index)
+      index: parseInt(index),
     }
   }
 
@@ -244,10 +257,10 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       identifier: left.name,
       index: left.index,
       castingType: castingType
-          ? this.typeGenerator.visitTypeSpecifier(castingType)
-          : null,
+        ? this.typeGenerator.visitTypeSpecifier(castingType)
+        : null,
       operator: ctx._operator.text,
-      value: this.visit(ctx._value)
+      value: this.visit(ctx._value),
     }
   }
 
@@ -332,7 +345,8 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       typeSpecifier: {
         type: 'typeSpecifier',
         value:
-            this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()).value + '[]',
+          this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()).value +
+          '[]',
       },
       typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
       identifier: ctx.Identifier().text,
@@ -469,6 +483,12 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       condition: new ExpressionGenerator().visit(ctx._condition),
       truebody: statementGen.visit(ctx._truebody),
       falsebody: falsebody,
+    }
+  }
+
+  visitPrintHeap(ctx: PrintHeapContext): cTree.PrintHeap {
+    return {
+      type: 'PrintHeap',
     }
   }
 

@@ -1,4 +1,4 @@
-import {ArrayAccessContext} from "./lang/CParser";
+import { ArrayAccessContext } from './lang/CParser'
 
 export type Literal = {
   type: 'Literal'
@@ -111,9 +111,18 @@ export type Malloc = {
   size: Expression
 }
 
+export type Free = {
+  type: 'Free'
+  name: string
+}
+
 export type SizeOf = {
   type: 'SizeOf'
   arg: Expression | TypeSpecifier
+}
+
+export type PrintHeap = {
+  type: 'PrintHeap'
 }
 
 export type cArray = {
@@ -138,13 +147,13 @@ export interface ExpressionMap {
   FunctionApplication: FunctionApplication
   Malloc: Malloc
   SizeOf: SizeOf
+  Free: Free
   SequenceExpression: SequenceExpression
   PointerExpression: PointerExpression
   PointerValueAssignment: PointerValueAssignment
   cArray: cArray
   arrayAccess: arrayAccess
   arrayAssignment: ArrayAssignment
-
 }
 
 export type Expression = ExpressionMap[keyof ExpressionMap]
@@ -246,6 +255,7 @@ export interface StatementMap {
   FunctionDeclaration: FunctionDeclaration
   Block: Block
   ArrayDeclaration: ArrayDeclaration
+  PrintHeap: PrintHeap
 }
 
 export type Statement = StatementMap[keyof StatementMap]
