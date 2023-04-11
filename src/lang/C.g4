@@ -22,7 +22,8 @@ WHITESPACE: [ \r\n\t]+ -> skip;
 
 DECIMAL: [0-9]+;
 FRACTION: Fraction;
-CHAR: '\'' Nondigit '\'';
+CHAR: '\'' (Digit|Nondigit|WHITESPACE) '\'';
+STRING: '"' CHAR+ '"';
 
 
 fragment
@@ -67,10 +68,7 @@ declarationSpecifier
     |   typeQualifier;
 
 Identifier
-    :   Nondigit
-        (   Nondigit
-        |   Digit
-        )*
+    :   Nondigit (Nondigit|Digit)*
     ;
 
 pointer: 
@@ -98,7 +96,10 @@ pointerValueAssignment
     : pointer operator=assignmentOperator value=expression
     ;
 
-array: '{' expression (',' expression)* '}';
+array
+    : '{' expression (',' expression)* '}'
+    |  STRING
+    ;
 
 arrayInitialization:
     qualifiers=typeQualifiers typeSpecifier Identifier '['']' '=' value=expression ';';
@@ -131,6 +132,7 @@ expression
    : DECIMAL                                                    # Decimal
    | FRACTION                                                   # Fraction
    | CHAR                                                       # Char
+   | STRING                                                     # String
    | Identifier                                                 # Identifier
    | functionApplication                                        # Application
    | '(' inner=expression ')'                                   # Parentheses

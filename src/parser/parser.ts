@@ -42,7 +42,7 @@ import {
   ArrayAssignmentContext,
   ParenthesesContext,
   FreeContext,
-  PrintHeapContext,
+  PrintHeapContext, StringContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -78,6 +78,19 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       raw: ctx.text,
     }
   }
+
+  // visitString(ctx: StringContext): cTree.cArray {
+  //   let strArr = ctx.STRING().text
+  //   strArr.substring(1, strArr.length - 1)
+  //   strArr.split("")
+  //   for (let character of strArr) {
+  //     character.replace('"', '\'')
+  //   }
+  //   return {
+  //     type: 'Array',
+  //     value:
+  //   }
+  // }
 
   visitArray(ctx: ArrayContext): cTree.cArray {
     return {

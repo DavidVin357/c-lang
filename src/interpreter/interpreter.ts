@@ -1,7 +1,7 @@
 import {} from 'typescript'
 import * as cTree from '../cTree'
 import { getRandom } from '../helpers/getRandom'
-import { LabeledStatement } from '../cTree'
+import {Expression, LabeledStatement} from '../cTree'
 import {
   evaluateAssignmentExpression,
   evaluateBinaryExpression,
@@ -669,10 +669,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
   SwitchStatement: function (node: cTree.SwitchStatement) {
     const condition = evaluate(node.condition)
-    if (!Number.isInteger(condition)) {
-      throw new Error('error: switch quantity not an integer')
+    if (!Number.isInteger(condition.value)) {
+      throw new Error("error: switch condition is not an integer")
     }
-    return evaluateSwitchBody(node.body.statements, condition)
+    return evaluateSwitchBody(node.body.statements, condition.value)
   },
 
   SequenceStatement: function (node: cTree.SequenceStatement) {
@@ -717,35 +717,20 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 }
 
-export function evaluateSwitchBody(
+function evaluateSwitchBody(
   statements: Array<LabeledStatement>,
   switchCon: number
 ) {
   let defaultCount = 0
   let defaultBody
 
-  // for (const statement of statements) {
-  //   // handle cases
-  //   if (statement.condition != null) {
-  //     const condition = evaluate(statement.condition)
-  //     // check matching case
-  //     if (condition === switchCon) {
-  //       const res = evaluate(statement.body)
-  //       // if the statement has a break, return the result
-  //       if (statement.hasBreak) {
-  //         return res
-  //       }
-  //       // otherwise, execute until statement with break
-  //
-  //     }
-  //   }
   for (let i = 0; i < statements.length; i++) {
     // handle cases
     const statement = statements[i]
     if (statement.condition != null) {
       const condition = evaluate(statement.condition)
       // check matching case
-      if (condition === switchCon) {
+      if (condition.value === switchCon) {
         const res = evaluate(statement.body)
         // if the statement has a break, return the result
         if (statement.hasBreak) {

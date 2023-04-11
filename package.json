@@ -17,7 +17,7 @@
     "ts-node": "^10.9.1"
   },
   "scripts": {
-    "antlr4ts": "antlr4ts -visitor ./src/lang/C.g4",
+    "antlr4ts": "antlr4ts -visitor src/lang/C.g4",
     "build": "yarn tsc --build --force",
     "dev": "node --loader ts-node/esm ./src/index.ts"
   }
