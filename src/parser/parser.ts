@@ -42,7 +42,7 @@ import {
   ArrayAssignmentContext,
   ParenthesesContext,
   FreeContext,
-  PrintHeapContext, StringContext,
+  PrintHeapContext, StringContext, ForLoopContext, DoWhileLoopContext, WhileLoopContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -502,6 +502,33 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   visitPrintHeap(ctx: PrintHeapContext): cTree.PrintHeap {
     return {
       type: 'PrintHeap',
+    }
+  }
+
+  visitForLoop(ctx:ForLoopContext): cTree.ForLoop {
+    return {
+      type: 'ForLoop',
+      initial: this.visitInitialization(ctx._initial),
+      condition: this.expressionGenerator.visit(ctx._condition),
+      incr: this.expressionGenerator.visitAssignment(ctx._incr),
+      body: this.visit(ctx._body)
+    }
+
+  }
+
+  visitWhileLoop(ctx:WhileLoopContext): cTree.WhileLoop {
+    return {
+      type: 'WhileLoop',
+      condition: this.expressionGenerator.visit(ctx._condition),
+      body: this.visit(ctx._body)
+    }
+  }
+
+  visitDoWhileLoop(ctx: DoWhileLoopContext): cTree.DoWhileLoop {
+    return {
+      type: 'DoWhileLoop',
+      condition: this.expressionGenerator.visit(ctx._condition),
+      body: this.visit(ctx._body)
     }
   }
 

@@ -7,23 +7,25 @@ export default run
 
 const code = ` 
 int main() {
-  int test = 12;
-  switch (test) {
-    case 11:
-      test += 0;
-      break;
-    case 12:
-      test += 12;
-    case 13:
-      test += 13;
-      break;
-    default:
-      test -= test;
-      break;
+  int num = 0;
+  int i = 0;
+  do {
+    num += 1;
   }
-  return test;
+  while (i > 5)
+  return num;
 }`
 console.log(run(code))
+
+
+//   int *arr;
+//   arr = malloc(4 * sizeof(int));
+//   arr[0] = 1;
+//   arr[1] = 2;
+//   arr[2] = 3;
+//   arr[3] = 4;
+//   free(arr);
+//   return arr[3];
 
 //  int a = 5;
 //   int* p = &a;

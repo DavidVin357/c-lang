@@ -193,6 +193,16 @@ switchBodyStatement
 
 returnStatement
     : 'return' expression ';';
+
+forLoop
+    :   'for' '(' initial=initialization condition=expression ';' incr=assignment ')' body=statement
+    ;
+doWhileLoop
+    :   'do' body=statement 'while' '(' condition=expression ')'
+    ;
+whileLoop
+    :   'while' '(' condition=expression ')' body=statement
+    ;
     
 statement
     :   expressionStatement
@@ -208,6 +218,9 @@ statement
     |   arrayInitialization
     |   arrayDeclaration
     |   printHeap
+    |   forLoop
+    |   doWhileLoop
+    |   whileLoop
     ;
 
 parameterDeclaration

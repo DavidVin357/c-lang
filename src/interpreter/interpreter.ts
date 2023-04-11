@@ -227,6 +227,8 @@ const freeMemory = (address: number, type: string) => {
 
 const getRandomHeapAddress = () => getRandom(HEAP_BOTTOM, HEAP_TOP)
 
+const populateDynamicArray = "penis";
+
 // Interpreter helpers
 const getTypeSize = (type: string): number => {
   if (type.includes('*')) {
@@ -673,6 +675,54 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       throw new Error("error: switch condition is not an integer")
     }
     return evaluateSwitchBody(node.body.statements, condition.value)
+  },
+
+  ForLoop: function (node: cTree.ForLoop) {
+    // create a new frame
+    const frameStart = stackFree
+    ENVIRONMENT.push({})
+
+    evaluate(node.initial)
+    let condition = evaluate(node.condition)
+    while (condition.value) {
+      evaluate(node.body)
+      evaluate(node.incr)
+      condition = evaluate(node.condition)
+    }
+
+    ENVIRONMENT.pop()
+    stackFree = frameStart
+  },
+
+  WhileLoop: function (node: cTree.WhileLoop) {
+    // create a new frame
+    const frameStart = stackFree
+    ENVIRONMENT.push({})
+
+    let condition = evaluate(node.condition)
+    while (condition.value) {
+      evaluate(node.body)
+      condition = evaluate(node.condition)
+    }
+
+    ENVIRONMENT.pop()
+    stackFree = frameStart
+  },
+
+  DoWhileLoop: function (node: cTree.DoWhileLoop) {
+    // create a new frame
+    const frameStart = stackFree
+    ENVIRONMENT.push({})
+
+    let condition = evaluate(node.condition)
+    evaluate(node.body)
+    while (condition.value) {
+      evaluate(node.body)
+      condition = evaluate(node.condition)
+    }
+
+    ENVIRONMENT.pop()
+    stackFree = frameStart
   },
 
   SequenceStatement: function (node: cTree.SequenceStatement) {
