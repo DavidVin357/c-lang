@@ -7,16 +7,28 @@ export default run
 
 const code = ` 
 int main() {
-  int num = 0;
-  int i = 0;
-  do {
-    num += 1;
-  }
-  while (i > 5)
-  return num;
+  char arr[] = "hello";
+  return arr[4];
 }`
+
 console.log(run(code))
 
+//int *arr;
+//   arr = malloc(4 * sizeof(int));
+//   arr[0] = 1;
+//   arr[1] = 2;
+//   arr[2] = 3;
+//   arr[3] = 4;
+//   free(arr);
+//   return arr[3];
+
+//int num = 0;
+//   int i = 0;
+//   do {
+//     num += 1;
+//   }
+//   while (i > 5)
+//   return num;
 
 //   int *arr;
 //   arr = malloc(4 * sizeof(int));

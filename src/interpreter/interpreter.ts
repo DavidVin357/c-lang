@@ -227,8 +227,6 @@ const freeMemory = (address: number, type: string) => {
 
 const getRandomHeapAddress = () => getRandom(HEAP_BOTTOM, HEAP_TOP)
 
-const populateDynamicArray = "penis";
-
 // Interpreter helpers
 const getTypeSize = (type: string): number => {
   if (type.includes('*')) {

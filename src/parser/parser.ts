@@ -79,18 +79,17 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  // visitString(ctx: StringContext): cTree.cArray {
-  //   let strArr = ctx.STRING().text
-  //   strArr.substring(1, strArr.length - 1)
-  //   strArr.split("")
-  //   for (let character of strArr) {
-  //     character.replace('"', '\'')
-  //   }
-  //   return {
-  //     type: 'Array',
-  //     value:
-  //   }
-  // }
+  visitString(ctx: StringContext): cTree.cArray {
+    const str = ctx.STRING().text + "\0"
+    return {
+      type: 'Array',
+      value: str.replace('"', '').split("").map(c => ({
+        type: 'Literal',
+        value: c.charCodeAt(0),
+        raw: c
+      }))
+    }
+  }
 
   visitArray(ctx: ArrayContext): cTree.cArray {
     return {
