@@ -241,6 +241,26 @@ export type ArrayDeclaration = {
   size: number
 }
 
+export type ForLoop = {
+  type: 'ForLoop'
+  initial: VariableInitialization
+  condition: Expression
+  incr: Assignment
+  body: Statement
+}
+
+export type WhileLoop = {
+  type: 'WhileLoop'
+  condition: Expression
+  body: Statement
+}
+
+export type DoWhileLoop = {
+  type: 'DoWhileLoop'
+  condition: Expression
+  body: Statement
+}
+
 export interface StatementMap {
   VariableDeclaration: VariableDeclaration
   VariableInitialization: VariableInitialization
@@ -256,6 +276,9 @@ export interface StatementMap {
   Block: Block
   ArrayDeclaration: ArrayDeclaration
   PrintHeap: PrintHeap
+  ForLoop: ForLoop
+  DoWhileLoop: DoWhileLoop
+  WhileLoop: WhileLoop
 }
 
 export type Statement = StatementMap[keyof StatementMap]
