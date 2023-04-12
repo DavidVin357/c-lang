@@ -1,13 +1,14 @@
 import {} from 'typescript'
 import * as cTree from '../cTree'
 import { getRandom } from '../helpers/getRandom'
-import {Expression, LabeledStatement} from '../cTree'
+import { LabeledStatement } from '../cTree'
 import {
   evaluateAssignmentExpression,
   evaluateBinaryExpression,
 } from '../utils/operators'
 
 export type Evaluator<T extends cTree.Node> = (node: T) => any
+import { table, getBorderCharacters } from 'table'
 
 // Code segment (stores function instructions)
 const CODE: { [identifier: string]: cTree.FunctionStorage } = {}
@@ -18,16 +19,23 @@ const ENVIRONMENT: {
     address: number
     typeSpecifier: string
     typeQualifiers: string[]
+    size?: number
   }
 }[] = [{}]
 const extendEnvironment = (
   name: string,
   address: number,
   typeSpecifier: string,
-  typeQualifiers: string[]
+  typeQualifiers: string[],
+  size?: number
 ) => {
   const lastIndex = ENVIRONMENT.length - 1
-  ENVIRONMENT[lastIndex][name] = { address, typeSpecifier, typeQualifiers }
+  ENVIRONMENT[lastIndex][name] = {
+    address,
+    typeSpecifier,
+    typeQualifiers,
+    ...(size && { size }),
+  }
 }
 
 const getEnvironmentValue = (name: string) => {
@@ -39,6 +47,7 @@ const getEnvironmentValue = (name: string) => {
     address: getRandomStackAddress(),
     typeSpecifier: 'int',
     typeQualifiers: null,
+    size: 4,
   }
 }
 
@@ -104,7 +113,8 @@ const memoryAllocateBasic = (
 
     // Floating Point types
 
-    case 'float' || 'double':
+    case 'double':
+    case 'float':
       MEMORY.setFloat64(freeIndex, value)
       return 8
 
@@ -114,7 +124,7 @@ const memoryAllocateBasic = (
 }
 
 const memoryRetrieveBasic = (index: number, type: string): any => {
-  if (type.includes('*')) {
+  if (type.includes('*') || type.includes('[]')) {
     return MEMORY.getFloat64(index)
   }
   switch (type) {
@@ -144,7 +154,8 @@ const memoryRetrieveBasic = (index: number, type: string): any => {
 
     // Floating Point types
 
-    case 'float' || 'double':
+    case 'double':
+    case 'float':
       return MEMORY.getFloat64(index)
 
     default:
@@ -207,16 +218,22 @@ const allocateHeapMemory = (size: number, node: any): number => {
   }
 }
 
-const freeMemory = (address: number, type: string) => {
+const freeMemory = (address: number, size: number) => {
   if (!isInHeap(address)) {
     throw Error('provided pointer is not in the heap!')
   }
-  let size = getTypeSize(type)
+  // let size = getTypeSize(type)
   let memoryNode
   if (heapFreeNode.start === address + size) {
     memoryNode = new HeapMemoryNode(
       address,
       heapFreeNode.end,
+      heapFreeNode.next
+    )
+  } else if (heapFreeNode.end === address) {
+    memoryNode = new HeapMemoryNode(
+      heapFreeNode.start,
+      address + size,
       heapFreeNode.next
     )
   } else {
@@ -259,8 +276,8 @@ const getTypeSize = (type: string): number => {
       return 8
 
     // Floating Point types
-
-    case 'float' || 'double':
+    case 'double':
+    case 'float':
       return 8
 
     default:
@@ -271,6 +288,7 @@ type EvaluationResult = {
   value: any
   typeSpecifier: string | null
   address?: number
+  size?: number
 }
 const dispatchWarning = (message: string) => {
   if (typeof window !== 'undefined') {
@@ -284,6 +302,20 @@ const dispatchWarning = (message: string) => {
   } else {
     console.log('Warning:')
     console.warn(message)
+  }
+}
+
+const dispathchTable = (table: any) => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('table', {
+        detail: {
+          message: table,
+        },
+      })
+    )
+  } else {
+    console.log(table)
   }
 }
 
@@ -348,7 +380,8 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   VariableInitialization: function (node: cTree.VariableInitialization) {
     const name = node.identifier
     const leftType = node.typeSpecifier.value
-    let { typeSpecifier: rightType, value } = actualValue(node.value)
+
+    let { typeSpecifier: rightType, value, size } = actualValue(node.value)
     // Casting of types
     if (node.castingType) {
       rightType = node.castingType.value
@@ -368,16 +401,18 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       (t: cTree.TypeQualifier) => t.value
     )
     const address = pushOnStack(value, leftType)
-    extendEnvironment(name, address, leftType, typeQualifiers)
+    extendEnvironment(name, address, leftType, typeQualifiers, size)
   },
 
   Assignment: function (node: cTree.Assignment) {
     const name: string = node.identifier
     const { address: leftAddress, typeSpecifier: leftType } =
       getEnvironmentValue(name)
-    let { typeSpecifier: rightType, value: rightValue } = actualValue(
-      node.value
-    )
+    let {
+      typeSpecifier: rightType,
+      value: rightValue,
+      size,
+    } = actualValue(node.value)
 
     // Casting of types
     if (node.castingType) {
@@ -402,16 +437,24 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       rightValue
     )
 
+    const lastIndex = ENVIRONMENT.length - 1
+
+    if (size) {
+      ENVIRONMENT[lastIndex][name].size = size
+    }
+
     memoryAllocateBasic(value, leftType, leftAddress)
   },
 
+  // arr[i] = x
   ArrayAssignment: function (node: cTree.ArrayAssignment) {
     const name = node.identifier
-    const { address: arrStart, typeSpecifier: arrType } =
+    const { address: pointerAddress, typeSpecifier: pointerType } =
       getEnvironmentValue(name)
+    const arrStart = memoryRetrieveBasic(pointerAddress, pointerType)
     const { typeSpecifier: leftType, value: leftValue } = actualValue(node.left)
-    const index = node.index
-    const addr = arrStart + (node.index + 1) * getTypeSize(leftType)
+
+    const addr = arrStart + node.index * getTypeSize(leftType)
     let { typeSpecifier: rightType, value: rightValue } = actualValue(
       node.value
     )
@@ -529,11 +572,11 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     const typeSpecifier = getEnvironmentValue(name).typeSpecifier
 
-    if (typeSpecifier.includes('[]'))
-      return {
-        value: address,
-        typeSpecifier: typeSpecifier.replace('[]', '') + '*',
-      }
+    // if (typeSpecifier.includes('[]'))
+    //   return {
+    //     value: address,
+    //     typeSpecifier: typeSpecifier.replace('[]', '') + '*',
+    //   }
 
     return { value: memoryRetrieveBasic(address, typeSpecifier), typeSpecifier }
   },
@@ -583,6 +626,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     return {
       value: allocateHeapMemory(size, heapFreeNode),
       typeSpecifier: 'void*',
+      size,
     }
   },
 
@@ -590,9 +634,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const envValue = getEnvironmentValue(node.name)
     const typeSpecifier = envValue.typeSpecifier
     const pointerAddress = envValue.address
+    const size = envValue.size || getTypeSize(typeSpecifier.slice(0, -1))
 
     const address = memoryRetrieveBasic(pointerAddress, typeSpecifier)
-    freeMemory(address, typeSpecifier.slice(0, -1))
+    freeMemory(address, size)
 
     const lastIndex = ENVIRONMENT.length - 1
 
@@ -603,7 +648,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
         delete ENVIRONMENT[lastIndex][key]
       }
     }
-    console.log('new env: ', ENVIRONMENT)
   },
 
   SizeOf: function (node: cTree.SizeOf) {
@@ -637,11 +681,13 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
   ArrayAccess: function (node: cTree.arrayAccess) {
     const name = node.name
-    const { address: arrStart, typeSpecifier: arrType } =
+    const { address: pointerAddress, typeSpecifier: pointerType } =
       getEnvironmentValue(name)
-    const type = arrType.replace('[]', '')
+    const arrStart = memoryRetrieveBasic(pointerAddress, pointerType)
+    const type = pointerType.slice(0, -1)
+    // const type = arrType.replace('[]', '')
     const typeSize = getTypeSize(type)
-    const idx = arrStart + (node.index + 1) * typeSize
+    const idx = arrStart + node.index * typeSize
     // retrieve memory using the memoryRetrieveBasic
     const value = memoryRetrieveBasic(idx, type)
     return {
@@ -669,7 +715,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   SwitchStatement: function (node: cTree.SwitchStatement) {
     const condition = evaluate(node.condition)
     if (!Number.isInteger(condition.value)) {
-      throw new Error("error: switch condition is not an integer")
+      throw new Error('error: switch condition is not an integer')
     }
     return evaluateSwitchBody(node.body.statements, condition.value)
   },
@@ -790,9 +836,9 @@ function evaluateSwitchBody(
 }
 
 const printHeap = () => {
+  const columnNames = [['ADDRESS', 'TYPE', 'VALUE']]
   const nodes = []
   for (let frame of ENVIRONMENT) {
-    console.log('frame', frame)
     const pointers = Object.values(frame).filter((v) =>
       v.typeSpecifier.includes('*')
     )
@@ -800,21 +846,34 @@ const printHeap = () => {
     for (const p of pointers) {
       const address = memoryRetrieveBasic(p.address, p.typeSpecifier)
       if (isInHeap(address)) {
-        const type = p.typeSpecifier.slice(0, -1)
-        const value = memoryRetrieveBasic(address, type)
-        // const addressString = `address: ${node.address} |\n`
-        // const typeString = `type: ${node.type} |\n`
-        // const valueString = `value: ${node.address} |\n`
-        const heapNode = {
-          address,
-          type,
-          value,
+        let type = p.typeSpecifier.slice(0, -1)
+        const typeSize = getTypeSize(type)
+        let value
+
+        if (p.size && p.size > typeSize) {
+          value = []
+          for (let i = 0; i < p.size; i += typeSize) {
+            value.push(memoryRetrieveBasic(address + i, type))
+          }
+          type += '[]'
+          value = '[' + value.toString() + ']'
+        } else {
+          value = memoryRetrieveBasic(address, type)
         }
+
+        const heapNode = [address, type, value]
         nodes.push(heapNode)
       }
     }
   }
-  console.table(nodes.sort((a, b) => a.address - b.address))
+  const config = {
+    columnDefault: {
+      width: 10,
+    },
+  }
+  dispathchTable(
+    table(columnNames.concat(nodes.sort((a, b) => a[0] - b[0])), config)
+  )
 }
 
 export function evaluate(node: cTree.Node) {

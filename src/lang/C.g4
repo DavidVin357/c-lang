@@ -102,7 +102,7 @@ array
     ;
 
 arrayInitialization:
-    qualifiers=typeQualifiers typeSpecifier Identifier '['']' '=' value=expression ';';
+    qualifiers=typeQualifiers typeSpecifier Identifier '['size=DECIMAL']' '=' value=expression ';';
 
 arrayDeclaration:
     qualifiers = typeQualifiers typeSpecifier Identifier '['size=DECIMAL']' ';';
