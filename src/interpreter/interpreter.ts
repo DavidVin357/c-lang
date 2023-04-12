@@ -419,9 +419,11 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   // arr[i] = x
   ArrayValueAssignment: function (node: cTree.ArrayValueAssignment) {
     const name = node.identifier
-    const { address: pointerAddress, typeSpecifier: pointerType } =
-      getEnvironmentValue(name)
-    const arrStart = memoryRetrieveBasic(pointerAddress, pointerType)
+    const { address, typeSpecifier } = getEnvironmentValue(name)
+    const arrStart = typeSpecifier.includes('*')
+      ? memoryRetrieveBasic(address, typeSpecifier)
+      : address
+
     const { typeSpecifier: leftType, value: leftValue } = actualValue(node.left)
 
     const addr = arrStart + node.index * getTypeSize(leftType)
