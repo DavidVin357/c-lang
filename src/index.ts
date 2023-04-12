@@ -7,7 +7,8 @@ export default run
 
 const code = ` 
 int main() {
-  char arr[] = "hello";
-  return arr[4];
+  int a[] = {1, 2, 3, 4, 523, 7, 145};
+  return sizeof(a);
 }`
 
+console.log(run(code))

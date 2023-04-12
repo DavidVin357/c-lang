@@ -1,8 +1,6 @@
-import { ArrayAccessContext } from './lang/CParser'
-
 export type Literal = {
   type: 'Literal'
-  value: string | number
+  value: string | number | bigint
   raw?: string | undefined
 }
 
@@ -24,11 +22,6 @@ export type PointerExpression = {
 
 export type VariableAddress = {
   type: 'VariableAddress'
-  name: string
-}
-
-export type Declarator = {
-  type: 'Pointer' | 'Identifier'
   name: string
 }
 
@@ -73,8 +66,8 @@ export type Assignment = {
   value: Expression
 }
 
-export type ArrayAssignment = {
-  type: 'ArrayAssignment'
+export type ArrayValueAssignment = {
+  type: 'ArrayValueAssignment'
   left: arrayAccess
   index: number
   operator?: string
@@ -128,6 +121,7 @@ export type PrintHeap = {
 export type cArray = {
   type: 'Array'
   value: Expression[]
+  length: number
 }
 
 export type arrayAccess = {
@@ -139,7 +133,6 @@ export type arrayAccess = {
 export interface ExpressionMap {
   Literal: Literal
   Identifier: Identifier
-  Declarator: Declarator
   VariableAddress: VariableAddress
   Assignment: Assignment
   BinaryExpression: BinaryExpression
@@ -153,7 +146,7 @@ export interface ExpressionMap {
   PointerValueAssignment: PointerValueAssignment
   cArray: cArray
   arrayAccess: arrayAccess
-  arrayAssignment: ArrayAssignment
+  ArrayValueAssignment: ArrayValueAssignment
 }
 
 export type Expression = ExpressionMap[keyof ExpressionMap]
@@ -195,8 +188,6 @@ export type ParameterDeclaration = {
   typeSpecifier: TypeSpecifier
   identifier: string
 }
-
-export type Declaration = VariableDeclaration
 
 export type SequenceStatement = {
   type: 'SequenceStatement'
@@ -273,7 +264,6 @@ export interface StatementMap {
   ParameterDeclaration: ParameterDeclaration
   ReturnStatement: ReturnStatement
   FunctionDeclaration: FunctionDeclaration
-  Block: Block
   ArrayDeclaration: ArrayDeclaration
   PrintHeap: PrintHeap
   ForLoop: ForLoop
@@ -282,11 +272,6 @@ export interface StatementMap {
 }
 
 export type Statement = StatementMap[keyof StatementMap]
-
-export type Block = {
-  type: 'Block'
-  body: SequenceStatement
-}
 
 export type FunctionDeclaration = {
   type: 'FunctionDeclaration'

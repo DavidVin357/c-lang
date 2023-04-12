@@ -102,7 +102,7 @@ array
     ;
 
 arrayInitialization:
-    qualifiers=typeQualifiers typeSpecifier Identifier '['size=DECIMAL']' '=' value=expression ';';
+    qualifiers=typeQualifiers typeSpecifier Identifier '['size=DECIMAL?']' '=' value=array ';';
 
 arrayDeclaration:
     qualifiers = typeQualifiers typeSpecifier Identifier '['size=DECIMAL']' ';';
@@ -110,7 +110,7 @@ arrayDeclaration:
 arrayAccess:
     Identifier '[' DECIMAL ']';
 
-arrayAssignment:
+arrayValueAssignment:
     arrayAccess operator=assignmentOperator casting? value=expression;
 
 malloc
@@ -145,7 +145,7 @@ expression
    | operator=VAR_ADDRESS right=Identifier                      # VarAddress
    | pointer                                                    # PointerExpression 
    | assignment                                                 # AssignmentExpression
-   | arrayAssignment                                            # ArrayAssignmentExpression
+   | arrayValueAssignment                                       # ArrayValueAssignmentExpression
    | pointerValueAssignment                                     # PointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
    | sizeof                                                     # SizeOfOperator
