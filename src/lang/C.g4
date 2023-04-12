@@ -23,7 +23,7 @@ WHITESPACE: [ \r\n\t]+ -> skip;
 DECIMAL: [0-9]+;
 FRACTION: Fraction;
 CHAR: '\'' (Digit|Nondigit|WHITESPACE) '\'';
-STRING: '"' CHAR+ '"';
+STRING: '"' (Digit|Nondigit|WHITESPACE)+ '"';
 
 
 fragment

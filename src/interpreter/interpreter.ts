@@ -244,8 +244,6 @@ const freeMemory = (address: number, size: number) => {
 
 const getRandomHeapAddress = () => getRandom(HEAP_BOTTOM, HEAP_TOP)
 
-const populateDynamicArray = 'penis'
-
 // Interpreter helpers
 const getTypeSize = (type: string): number => {
   if (type.includes('*')) {
@@ -699,7 +697,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   // STATEMENTS
-
   ExpressionStatement: function (
     node: cTree.ExpressionStatement
   ): EvaluationResult {
@@ -724,10 +721,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   ForLoop: function (node: cTree.ForLoop) {
-    // create a new frame
-    const frameStart = stackFree
-    ENVIRONMENT.push({})
-
     evaluate(node.initial)
     let condition = evaluate(node.condition)
     while (condition.value) {
@@ -735,47 +728,33 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       evaluate(node.incr)
       condition = evaluate(node.condition)
     }
-
-    ENVIRONMENT.pop()
-    stackFree = frameStart
   },
 
   WhileLoop: function (node: cTree.WhileLoop) {
-    // create a new frame
-    const frameStart = stackFree
-    ENVIRONMENT.push({})
-
     let condition = evaluate(node.condition)
     while (condition.value) {
       evaluate(node.body)
       condition = evaluate(node.condition)
     }
-
-    ENVIRONMENT.pop()
-    stackFree = frameStart
   },
 
   DoWhileLoop: function (node: cTree.DoWhileLoop) {
-    // create a new frame
-    const frameStart = stackFree
-    ENVIRONMENT.push({})
-
     let condition = evaluate(node.condition)
     evaluate(node.body)
     while (condition.value) {
       evaluate(node.body)
       condition = evaluate(node.condition)
     }
-
-    ENVIRONMENT.pop()
-    stackFree = frameStart
   },
 
   SequenceStatement: function (node: cTree.SequenceStatement) {
     let res
+    const free = stackFree
+    ENVIRONMENT.push({})
     for (const instr of node.statements) {
       res = evaluate(instr)
     }
+    ENVIRONMENT.pop()
     return res
   },
 
