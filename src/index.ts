@@ -5,18 +5,53 @@ export function run(code: string) {
 }
 export default run
 
-const code = ` 
-int main() {
-  int num = 0;
-  int i = 0;
-  do {
-    num += 1;
-  }
-  while (i > 5)
-  return num;
-}`
-console.log(run(code))
+// const code = `
+// int main() {
+//   int a = 5;
+//   int* p = &a;
+//   int* ptr = malloc(4);
+//   int *ptr2 = malloc(4);
+//   char* ptr3 = malloc(5);
+//   free(ptr2);
+//   free(ptr3);
+//   int *ptr4 = malloc(8);
+//   *ptr4 = 168;
+//   double* ptr5 = malloc(8);
+//   *ptr5 = 11.356;
+//   free(ptr4);
+//   int *ptr6 = malloc(9);
+//   int arr[4] = {1, 5, 2, 3};
+//   *ptr6 = 1942;
+//   print_heap();
+//   return *ptr6;
+// }`
+const code = `
+  int main() {
+    int* arr = malloc(12);
+    arr[0] = 5; 
+    arr[1] = 6; 
+    arr[2] = 7; 
+    float *ptr = malloc(8);
+    *ptr = 65.23;
 
+    int *ptr2 = malloc(4);
+    *ptr2 = 12;
+
+    char* some_ptr = malloc(1); 
+    *some_ptr = 'g';
+
+    free(ptr);
+    free(arr);
+    
+    double* double_ptr = malloc(16); 
+    double_ptr[0] = 5.3;
+    double_ptr[1] = 3.4;
+    
+    print_heap();
+    return 3;
+  }
+`
+console.log(run(code))
 
 //   int *arr;
 //   arr = malloc(4 * sizeof(int));
