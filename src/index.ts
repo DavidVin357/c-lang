@@ -7,10 +7,13 @@ export default run
 
 const code = ` 
 int main() {
-  int a[] = {1, 2, 3, 4, 523, 7, 145};
-  a[2] = 14;
-  return a[2];
-  return sizeof(a);
-}`
+  int a[] = {1, 2, 3, 4, 5, 6};
+  for (int i = 0; i < 5; i+=1) {
+    print(a[i]);
+  }
+
+  return 4;
+}
+`
 
 console.log(run(code))

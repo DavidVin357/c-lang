@@ -45,6 +45,9 @@ import {
   ForLoopContext,
   DoWhileLoopContext,
   WhileLoopContext,
+  PrintContext,
+  PrefixContext,
+  PostfixContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -129,11 +132,13 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
   }
 
   visitArrayAccess(ctx: ArrayAccessContext): cTree.arrayAccess {
-    const index = ctx.DECIMAL().text
+    if (!ctx._index.text || !ctx._name.text) {
+      throw Error('Parsing error: array access')
+    }
     return {
       type: 'ArrayAccess',
-      name: ctx.Identifier().text,
-      index: parseInt(index),
+      name: ctx._name.text,
+      index: this.visit(ctx._index),
     }
   }
 
@@ -156,7 +161,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
   }
 
   visitString(ctx: StringContext): cTree.cArray {
-    const str = ctx.STRING().text + '\0'
+    const str = ctx.STRING().text
     return {
       type: 'Array',
       value: str
@@ -168,6 +173,22 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
           raw: c,
         })),
       length: str.length,
+    }
+  }
+  // Unary operations
+  visitPrefix(ctx: PrefixContext): cTree.PrefixExpression {
+    return {
+      type: 'PrefixExpression',
+      operator: ctx._operator.text,
+      right: this.visit(ctx._right),
+    }
+  }
+
+  visitPostfix(ctx: PostfixContext): cTree.PostfixExpression {
+    return {
+      type: 'PostfixExpression',
+      operator: ctx._operator.text,
+      left: this.visit(ctx._left),
     }
   }
 
@@ -415,7 +436,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   visitArrayInitialization(
     ctx: ArrayInitializationContext
   ): cTree.VariableInitialization {
-    const array = this.expressionGenerator.visitArray(ctx._value)
+    const array = this.expressionGenerator.visit(ctx._value)
     const typeSpecifier = this.typeGenerator.visitTypeSpecifier(
       ctx.typeSpecifier()
     ).value
@@ -530,13 +551,20 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
+  visitPrint(ctx: PrintContext): cTree.Print {
+    return {
+      type: 'Print',
+      value: this.expressionGenerator.visit(ctx._val),
+    }
+  }
+
   // Loops
   visitForLoop(ctx: ForLoopContext): cTree.ForLoop {
     return {
       type: 'ForLoop',
       initial: this.visitInitialization(ctx._initial),
       condition: this.expressionGenerator.visit(ctx._condition),
-      incr: this.expressionGenerator.visitAssignment(ctx._incr),
+      action: this.visit(ctx._action),
       body: this.visit(ctx._body),
     }
   }

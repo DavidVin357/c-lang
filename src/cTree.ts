@@ -69,7 +69,7 @@ export type Assignment = {
 export type ArrayValueAssignment = {
   type: 'ArrayValueAssignment'
   left: arrayAccess
-  index: number
+  index: Expression
   operator?: string
   castingType: TypeSpecifier | null
   identifier: string
@@ -89,6 +89,18 @@ export type BinaryExpression = {
   left: Expression
   right: Expression
 }
+
+export type PostfixExpression = {
+  type: 'PostfixExpression'
+  operator?: string
+  left: Expression
+}
+export type PrefixExpression = {
+  type: 'PrefixExpression'
+  operator?: string
+  right: Expression
+}
+
 export type ParenthesesExpression = {
   type: 'ParenthesesExpression'
   value: Expression
@@ -118,6 +130,11 @@ export type PrintHeap = {
   type: 'PrintHeap'
 }
 
+export type Print = {
+  type: 'Print'
+  value: Expression
+}
+
 export type cArray = {
   type: 'Array'
   value: Expression[]
@@ -127,7 +144,7 @@ export type cArray = {
 export type arrayAccess = {
   type: 'ArrayAccess'
   name: string
-  index: number
+  index: Expression
 }
 
 export interface ExpressionMap {
@@ -136,6 +153,8 @@ export interface ExpressionMap {
   VariableAddress: VariableAddress
   Assignment: Assignment
   BinaryExpression: BinaryExpression
+  PostfixExpression: PostfixExpression
+  PrefixExpression: PrefixExpression
   ParenthesesExpression: ParenthesesExpression
   FunctionApplication: FunctionApplication
   Malloc: Malloc
@@ -236,7 +255,7 @@ export type ForLoop = {
   type: 'ForLoop'
   initial: VariableInitialization
   condition: Expression
-  incr: Assignment
+  action: Statement
   body: Statement
 }
 
@@ -266,6 +285,7 @@ export interface StatementMap {
   FunctionDeclaration: FunctionDeclaration
   ArrayDeclaration: ArrayDeclaration
   PrintHeap: PrintHeap
+  Print: Print
   ForLoop: ForLoop
   DoWhileLoop: DoWhileLoop
   WhileLoop: WhileLoop
