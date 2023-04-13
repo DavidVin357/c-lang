@@ -8,7 +8,6 @@ import {
   CParser,
   DecimalContext,
   DeclarationContext,
-  ExpressionContext,
   ExpressionStatementContext,
   FractionContext,
   IdentifierContext,
@@ -36,13 +35,19 @@ import {
   PointerValueAssignmentContext,
   ArrayInitializationContext,
   ArrayContext,
-  AccessContext,
   ArrayAccessContext,
   ArrayDeclarationContext,
-  ArrayAssignmentContext,
+  ArrayValueAssignmentContext,
   ParenthesesContext,
   FreeContext,
-  PrintHeapContext, StringContext, ForLoopContext, DoWhileLoopContext, WhileLoopContext,
+  PrintHeapContext,
+  StringContext,
+  ForLoopContext,
+  DoWhileLoopContext,
+  WhileLoopContext,
+  PrintContext,
+  PrefixContext,
+  PostfixContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -52,18 +57,21 @@ import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { CharStreams, CommonTokenStream } from 'antlr4ts'
+import { getTypeSize } from '../interpreter/helpers'
 
 class ExpressionGenerator implements CVisitor<cTree.Expression> {
   typeGenerator = new TypeGenerator()
-  visitDecimal(ctx: DecimalContext): cTree.Expression {
+
+  // Primitives
+  visitDecimal(ctx: DecimalContext): cTree.Literal {
     return {
       type: 'Literal',
-      value: parseInt(ctx.text),
+      value: ctx.text.length < 16 ? parseInt(ctx.text) : BigInt(ctx.text),
       raw: ctx.text,
     }
   }
 
-  visitFraction(ctx: FractionContext): cTree.Expression {
+  visitFraction(ctx: FractionContext): cTree.Literal {
     return {
       type: 'Literal',
       value: parseFloat(ctx.text),
@@ -71,7 +79,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitChar(ctx: CharContext): cTree.Expression {
+  visitChar(ctx: CharContext): cTree.Literal {
     return {
       type: 'Literal',
       value: ctx.text.replace("'", '').charCodeAt(0),
@@ -79,25 +87,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitString(ctx: StringContext): cTree.cArray {
-    const str = ctx.STRING().text + "\0"
-    return {
-      type: 'Array',
-      value: str.replace('"', '').split("").map(c => ({
-        type: 'Literal',
-        value: c.charCodeAt(0),
-        raw: c
-      }))
-    }
-  }
-
-  visitArray(ctx: ArrayContext): cTree.cArray {
-    return {
-      type: 'Array',
-      value: ctx.expression().map((e) => this.visit(e)),
-    }
-  }
-
+  // Functions and variables
   visitIdentifier(ctx: IdentifierContext): cTree.Identifier {
     return {
       type: 'Identifier',
@@ -105,6 +95,104 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
+  visitAssignment(ctx: AssignmentContext): cTree.Assignment {
+    const castingType = ctx.casting()?.typeSpecifier()
+    return {
+      type: 'Assignment',
+      identifier: ctx.Identifier().text,
+      castingType: castingType
+        ? this.typeGenerator.visitTypeSpecifier(castingType)
+        : null,
+      operator: ctx._operator.text,
+      value: this.visit(ctx._value),
+    }
+  }
+
+  visitFunctionApplication(
+    ctx: FunctionApplicationContext
+  ): cTree.FunctionApplication {
+    const name = ctx.Identifier().text
+    const expressionArgs = ctx.argumentExpressionList().expression()
+    const args = expressionArgs.map((ea) => this.visit(ea))
+
+    return {
+      type: 'FunctionApplication',
+      name,
+      args,
+    }
+  }
+
+  // Arrays
+  visitArray(ctx: ArrayContext): cTree.cArray {
+    return {
+      type: 'Array',
+      value: ctx.expression().map((e) => this.visit(e)),
+      length: ctx.expression().length,
+    }
+  }
+
+  visitArrayAccess(ctx: ArrayAccessContext): cTree.arrayAccess {
+    if (!ctx._index.text || !ctx._name.text) {
+      throw Error('Parsing error: array access')
+    }
+    return {
+      type: 'ArrayAccess',
+      name: ctx._name.text,
+      index: this.visit(ctx._index),
+    }
+  }
+
+  visitArrayValueAssignment(
+    ctx: ArrayValueAssignmentContext
+  ): cTree.ArrayValueAssignment {
+    const castingType = ctx.casting()?.typeSpecifier()
+    const left = this.visitArrayAccess(ctx.arrayAccess())
+    return {
+      left: left,
+      type: 'ArrayValueAssignment',
+      identifier: left.name,
+      index: left.index,
+      castingType: castingType
+        ? this.typeGenerator.visitTypeSpecifier(castingType)
+        : null,
+      operator: ctx._operator.text,
+      value: this.visit(ctx._value),
+    }
+  }
+
+  visitString(ctx: StringContext): cTree.cArray {
+    const str = ctx.STRING().text
+    return {
+      type: 'Array',
+      value: str
+        .replace('"', '')
+        .split('')
+        .map((c) => ({
+          type: 'Literal',
+          value: c.charCodeAt(0),
+          raw: c,
+        })),
+      length: str.length,
+    }
+  }
+  // Unary operations
+  visitPrefix(ctx: PrefixContext): cTree.PrefixExpression {
+    return {
+      type: 'PrefixExpression',
+      operator: ctx._operator.text,
+      right: this.visit(ctx._right),
+    }
+  }
+
+  visitPostfix(ctx: PostfixContext): cTree.PostfixExpression {
+    return {
+      type: 'PostfixExpression',
+      operator: ctx._operator.text,
+      left: this.visit(ctx._left),
+    }
+  }
+
+  // Binary operations
   visitAdditive(ctx: AdditiveContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
@@ -165,6 +253,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
+  // Memory management
   visitVarAddress(ctx: VarAddressContext): cTree.VariableAddress {
     return {
       type: 'VariableAddress',
@@ -181,43 +270,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       multiplicity: pointers.length,
     }
   }
-  visitAssignment(ctx: AssignmentContext): cTree.Assignment {
-    const castingType = ctx.casting()?.typeSpecifier()
-    return {
-      type: 'Assignment',
-      identifier: ctx.Identifier().text,
-      castingType: castingType
-        ? this.typeGenerator.visitTypeSpecifier(castingType)
-        : null,
-      operator: ctx._operator.text,
-      value: this.visit(ctx._value),
-    }
-  }
 
-  visitPointerValueAssignment(
-    ctx: PointerValueAssignmentContext
-  ): cTree.Expression {
-    return {
-      type: 'PointerValueAssignment',
-      pointer: this.visitPointer(ctx.pointer()),
-      operator: ctx._operator.text,
-      value: this.visit(ctx._value),
-    }
-  }
-
-  visitFunctionApplication(
-    ctx: FunctionApplicationContext
-  ): cTree.FunctionApplication {
-    const name = ctx.Identifier().text
-    const expressionArgs = ctx.argumentExpressionList().expression()
-    const args = expressionArgs.map((ea) => this.visit(ea))
-
-    return {
-      type: 'FunctionApplication',
-      name,
-      args,
-    }
-  }
   visitMalloc(ctx: MallocContext): cTree.Malloc {
     return {
       type: 'Malloc',
@@ -251,31 +304,18 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitArrayAccess(ctx: ArrayAccessContext): cTree.arrayAccess {
-    const index = ctx.DECIMAL().text
+  visitPointerValueAssignment(
+    ctx: PointerValueAssignmentContext
+  ): cTree.Expression {
     return {
-      type: 'ArrayAccess',
-      name: ctx.Identifier().text,
-      index: parseInt(index),
-    }
-  }
-
-  visitArrayAssignment(ctx: ArrayAssignmentContext): cTree.ArrayAssignment {
-    const castingType = ctx.casting()?.typeSpecifier()
-    const left = this.visitArrayAccess(ctx.arrayAccess())
-    return {
-      left: left,
-      type: 'ArrayAssignment',
-      identifier: left.name,
-      index: left.index,
-      castingType: castingType
-        ? this.typeGenerator.visitTypeSpecifier(castingType)
-        : null,
+      type: 'PointerValueAssignment',
+      pointer: this.visitPointer(ctx.pointer()),
       operator: ctx._operator.text,
       value: this.visit(ctx._value),
     }
   }
 
+  // Visitor basics
   visit(tree: ParseTree): cTree.Expression {
     return tree.accept(this)
   }
@@ -342,6 +382,17 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   typeGenerator = new TypeGenerator()
   expressionGenerator = new ExpressionGenerator()
 
+  // Expression Statement
+  visitExpressionStatement(
+    ctx: ExpressionStatementContext
+  ): cTree.ExpressionStatement {
+    return {
+      type: 'ExpressionStatement',
+      expression: new ExpressionGenerator().visit(ctx.expression()),
+    }
+  }
+
+  // Declarations & Initializations
   visitDeclaration(ctx: DeclarationContext): cTree.VariableDeclaration {
     return {
       type: 'VariableDeclaration',
@@ -385,27 +436,39 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   visitArrayInitialization(
     ctx: ArrayInitializationContext
   ): cTree.VariableInitialization {
+    const array = this.expressionGenerator.visit(ctx._value)
+    const typeSpecifier = this.typeGenerator.visitTypeSpecifier(
+      ctx.typeSpecifier()
+    ).value
     return {
       type: 'VariableInitialization',
       typeSpecifier: {
         type: 'typeSpecifier',
-        value:
-          this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()).value +
-          '[]',
+        value: typeSpecifier + '[]',
       },
       typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
       castingType: null,
       identifier: ctx.Identifier().text,
-      value: this.expressionGenerator.visit(ctx._value),
+      value: array,
     }
   }
 
-  visitExpressionStatement(
-    ctx: ExpressionStatementContext
-  ): cTree.ExpressionStatement {
+  // Functions
+  visitFunctionDeclaration(
+    ctx: FunctionDeclarationContext
+  ): cTree.FunctionDeclaration {
+    const name = ctx.Identifier().text
+    const typeSpecifier = ctx.typeSpecifier().text
+    const body = this.visitCompoundStatement(ctx.compoundStatement())
+    const params = ctx.parameterList().parameterDeclaration()
+    const formals = params.map((p) => this.visitParameterDeclaration(p))
+
     return {
-      type: 'ExpressionStatement',
-      expression: new ExpressionGenerator().visit(ctx.expression()),
+      type: 'FunctionDeclaration',
+      name,
+      typeSpecifier,
+      body,
+      formals,
     }
   }
 
@@ -431,24 +494,6 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
-  visitFunctionDeclaration(
-    ctx: FunctionDeclarationContext
-  ): cTree.FunctionDeclaration {
-    const name = ctx.Identifier().text
-    const typeSpecifier = ctx.typeSpecifier().text
-    const body = this.visitCompoundStatement(ctx.compoundStatement())
-    const params = ctx.parameterList().parameterDeclaration()
-    const formals = params.map((p) => this.visitParameterDeclaration(p))
-
-    return {
-      type: 'FunctionDeclaration',
-      name,
-      typeSpecifier,
-      body,
-      formals,
-    }
-  }
-
   visitReturnStatement(ctx: ReturnStatementContext): cTree.ReturnStatement {
     return {
       type: 'ReturnStatement',
@@ -456,6 +501,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
+  // Conditionals
   visitSwitchStatement(ctx: SwitchStatementContext): cTree.SwitchStatement {
     return {
       type: 'SwitchStatement',
@@ -498,28 +544,36 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
+  // IO operations
   visitPrintHeap(ctx: PrintHeapContext): cTree.PrintHeap {
     return {
       type: 'PrintHeap',
     }
   }
 
-  visitForLoop(ctx:ForLoopContext): cTree.ForLoop {
+  visitPrint(ctx: PrintContext): cTree.Print {
+    return {
+      type: 'Print',
+      value: this.expressionGenerator.visit(ctx._val),
+    }
+  }
+
+  // Loops
+  visitForLoop(ctx: ForLoopContext): cTree.ForLoop {
     return {
       type: 'ForLoop',
       initial: this.visitInitialization(ctx._initial),
       condition: this.expressionGenerator.visit(ctx._condition),
-      incr: this.expressionGenerator.visitAssignment(ctx._incr),
-      body: this.visit(ctx._body)
+      action: this.visit(ctx._action),
+      body: this.visit(ctx._body),
     }
-
   }
 
-  visitWhileLoop(ctx:WhileLoopContext): cTree.WhileLoop {
+  visitWhileLoop(ctx: WhileLoopContext): cTree.WhileLoop {
     return {
       type: 'WhileLoop',
       condition: this.expressionGenerator.visit(ctx._condition),
-      body: this.visit(ctx._body)
+      body: this.visit(ctx._body),
     }
   }
 
@@ -527,10 +581,11 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     return {
       type: 'DoWhileLoop',
       condition: this.expressionGenerator.visit(ctx._condition),
-      body: this.visit(ctx._body)
+      body: this.visit(ctx._body),
     }
   }
 
+  // Visitor basics
   visit(tree: ParseTree): cTree.Statement {
     return tree.accept(this)
   }
@@ -555,11 +610,6 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   visitErrorNode(node: ErrorNode): cTree.Statement {
     throw new Error('invalid statement')
   }
-}
-
-function convertExpression(expression: ExpressionContext): cTree.Expression {
-  const generator = new ExpressionGenerator()
-  return expression.accept(generator)
 }
 
 function convertProgram(program: ProgramContext): cTree.Program {

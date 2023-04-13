@@ -3,7 +3,7 @@
     "outDir": "./dist",
     "module": "NodeNext",
     "declaration": true,
-    "target": "es2016",
+    "target": "ES2020",
     "lib": ["es2021.string", "es2018", "es2017.object", "dom", "es2020"],
     "sourceMap": true,
     "allowJs": false,
