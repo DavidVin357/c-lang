@@ -24,8 +24,9 @@ WHITESPACE: [ \r\n\t]+ -> skip;
 
 DECIMAL: [0-9]+;
 FRACTION: Fraction;
-CHAR: '\'' (Digit|Nondigit|WHITESPACE) '\'';
-STRING: '"' (Digit|Nondigit|WHITESPACE)+ '"';
+
+CHAR: '\'' . '\'';
+STRING: '"' .*? '"';
 
 
 fragment
@@ -84,18 +85,32 @@ initialization
     : qualifiers=typeQualifiers typeSpecifier Identifier '=' casting? value=expression ';'
     ;
 
-assignmentOperator
+binaryAssignmentOperator
     :   '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='
     ;
+unaryAssignmentOperator
+    : UNARY_ADD | UNARY_SUB;
+
 casting: '(' typeSpecifier ')';
 
-assignment
-    : Identifier operator=assignmentOperator casting? value=expression
+binaryAssignment
+    : Identifier operator=binaryAssignmentOperator casting? value=expression
     ;
 
+postfixAssignment
+    : Identifier operator=unaryAssignmentOperator
+    ;
+
+prefixAssignment
+    : operator=unaryAssignmentOperator Identifier
+    ;
+
+assignment:
+    binaryAssignment | prefixAssignment | postfixAssignment;
+    
 // e.g., *h = 43
 pointerValueAssignment
-    : pointer operator=assignmentOperator value=expression
+    : pointer operator=binaryAssignmentOperator value=expression
     ;
 
 array
@@ -113,7 +128,7 @@ arrayAccess:
     name=Identifier '[' index=expression ']';
 
 arrayValueAssignment:
-    arrayAccess operator=assignmentOperator casting? value=expression;
+    arrayAccess operator=binaryAssignmentOperator casting? value=expression;
 
 malloc
     : 'malloc' '(' size=expression ')'
@@ -130,7 +145,9 @@ free:
 
 printHeap: 'print_heap' '(' ')' ';';
 
-print: 'print' '(' val=expression ')';
+printStack: 'print_stack' '(' ')' ';';
+
+print: 'print' '(' value=expression ')' ';';
 
 expression
    : DECIMAL                                                    # Decimal
@@ -141,8 +158,6 @@ expression
    | functionApplication                                        # Application
    | '(' inner=expression ')'                                   # Parentheses
    | arrayAccess                                                # Access
-   | left=expression operator=(UNARY_ADD | UNARY_SUB)           # Postfix
-   | operator=(UNARY_ADD | UNARY_SUB) right=expression          # Prefix
    | operator=VAR_ADDRESS right=Identifier                      # VarAddress
    | sizeof                                                     # SizeOfOperator
    | left=expression operator=(ADD | SUB) right=expression      # Additive
@@ -227,6 +242,7 @@ statement
     |   doWhileLoop
     |   whileLoop
     |   printHeap
+    |   printStack
     |   print
     ;
 

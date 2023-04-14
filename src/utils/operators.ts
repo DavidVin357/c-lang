@@ -58,23 +58,12 @@ export function evaluateAssignmentExpression(
   }
 }
 
-export function evaluatePrefixExpression(right: any, operator: string) {
+export function evaluateUnaryExpression(right: any, operator: string) {
   switch (operator) {
     case '++':
       return ++right
     case '--':
       return --right
-    default:
-      return undefined
-  }
-}
-
-export function evaluatePostfixExpression(left: any, operator: string) {
-  switch (operator) {
-    case '++':
-      return left++
-    case '--':
-      return left--
     default:
       return undefined
   }

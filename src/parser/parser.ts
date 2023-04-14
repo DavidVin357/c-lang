@@ -2,7 +2,6 @@ import { CLexer } from '../lang/CLexer'
 
 import {
   AdditiveContext,
-  AssignmentContext,
   CompoundStatementContext,
   ConditionalStatementContext,
   CParser,
@@ -46,8 +45,10 @@ import {
   DoWhileLoopContext,
   WhileLoopContext,
   PrintContext,
-  PrefixContext,
-  PostfixContext,
+  BinaryAssignmentContext,
+  PostfixAssignmentContext,
+  PrefixAssignmentContext,
+  PrintStackContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -95,16 +96,32 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitAssignment(ctx: AssignmentContext): cTree.Assignment {
+  visitBinaryAssignment(ctx: BinaryAssignmentContext): cTree.BinaryAssignment {
     const castingType = ctx.casting()?.typeSpecifier()
     return {
-      type: 'Assignment',
+      type: 'BinaryAssignment',
       identifier: ctx.Identifier().text,
       castingType: castingType
         ? this.typeGenerator.visitTypeSpecifier(castingType)
         : null,
       operator: ctx._operator.text,
       value: this.visit(ctx._value),
+    }
+  }
+
+  visitPostfixAssignment(ctx: PostfixAssignmentContext): cTree.UnaryAssignment {
+    return {
+      type: 'PostfixAssignment',
+      operator: ctx._operator.text,
+      identifier: ctx.Identifier().text,
+    }
+  }
+
+  visitPrefixAssignment(ctx: PrefixAssignmentContext): cTree.UnaryAssignment {
+    return {
+      type: 'PrefixAssignment',
+      operator: ctx._operator.text,
+      identifier: ctx.Identifier().text,
     }
   }
 
@@ -162,33 +179,20 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
 
   visitString(ctx: StringContext): cTree.cArray {
     const str = ctx.STRING().text
+    console.log('str', str)
     return {
       type: 'Array',
       value: str
-        .replace('"', '')
+        .replaceAll('"', '')
         .split('')
         .map((c) => ({
           type: 'Literal',
           value: c.charCodeAt(0),
+          typeSpecifier: 'char',
           raw: c,
         })),
+      typeSpecifier: 'char[]',
       length: str.length,
-    }
-  }
-  // Unary operations
-  visitPrefix(ctx: PrefixContext): cTree.PrefixExpression {
-    return {
-      type: 'PrefixExpression',
-      operator: ctx._operator.text,
-      right: this.visit(ctx._right),
-    }
-  }
-
-  visitPostfix(ctx: PostfixContext): cTree.PostfixExpression {
-    return {
-      type: 'PostfixExpression',
-      operator: ctx._operator.text,
-      left: this.visit(ctx._left),
     }
   }
 
@@ -486,6 +490,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     ctx: CompoundStatementContext
   ): cTree.SequenceStatement {
     const childStatements = ctx.blockItemList()?.children
+
     return {
       type: 'SequenceStatement',
       statements: childStatements
@@ -545,16 +550,22 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   }
 
   // IO operations
-  visitPrintHeap(ctx: PrintHeapContext): cTree.PrintHeap {
+  visitPrintHeap(ctx: PrintHeapContext): cTree.PrintMemory {
     return {
       type: 'PrintHeap',
+    }
+  }
+
+  visitPrintStack(ctx: PrintStackContext): cTree.PrintMemory {
+    return {
+      type: 'PrintStack',
     }
   }
 
   visitPrint(ctx: PrintContext): cTree.Print {
     return {
       type: 'Print',
-      value: this.expressionGenerator.visit(ctx._val),
+      value: this.expressionGenerator.visit(ctx._value),
     }
   }
 

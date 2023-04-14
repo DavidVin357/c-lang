@@ -1,7 +1,8 @@
 export type Literal = {
   type: 'Literal'
   value: string | number | bigint
-  raw?: string | undefined
+  raw?: string
+  typeSpecifier?: string
 }
 
 export type Identifier = {
@@ -58,12 +59,18 @@ export type BinaryOperator =
   | '&'
   | '&&'
 
-export type Assignment = {
-  type: 'Assignment'
-  operator?: string
+export type BinaryAssignment = {
+  type: 'BinaryAssignment'
+  operator: string
   castingType: TypeSpecifier | null
   identifier: string
   value: Expression
+}
+
+export type UnaryAssignment = {
+  type: 'PostfixAssignment' | 'PrefixAssignment'
+  operator: string
+  identifier: string
 }
 
 export type ArrayValueAssignment = {
@@ -126,8 +133,8 @@ export type SizeOf = {
   arg: Expression | TypeSpecifier
 }
 
-export type PrintHeap = {
-  type: 'PrintHeap'
+export type PrintMemory = {
+  type: 'PrintHeap' | 'PrintStack'
 }
 
 export type Print = {
@@ -138,6 +145,7 @@ export type Print = {
 export type cArray = {
   type: 'Array'
   value: Expression[]
+  typeSpecifier?: string
   length: number
 }
 
@@ -151,7 +159,8 @@ export interface ExpressionMap {
   Literal: Literal
   Identifier: Identifier
   VariableAddress: VariableAddress
-  Assignment: Assignment
+  BinaryAssignment: BinaryAssignment
+  UnaryAssignment: UnaryAssignment
   BinaryExpression: BinaryExpression
   PostfixExpression: PostfixExpression
   PrefixExpression: PrefixExpression
@@ -284,7 +293,7 @@ export interface StatementMap {
   ReturnStatement: ReturnStatement
   FunctionDeclaration: FunctionDeclaration
   ArrayDeclaration: ArrayDeclaration
-  PrintHeap: PrintHeap
+  PrintMemory: PrintMemory
   Print: Print
   ForLoop: ForLoop
   DoWhileLoop: DoWhileLoop

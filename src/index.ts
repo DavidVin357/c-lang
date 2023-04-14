@@ -8,11 +8,15 @@ export default run
 const code = ` 
 int main() {
   int a[] = {1, 2, 3, 4, 5, 6};
-  for (int i = 0; i < 5; i+=1) {
-    print(a[i]);
-  }
+  int i = 0;
+  int b = 4;
+  int c = 11;
+  int *ptr = &c;
+  int *ptr2 = malloc(5);
+  int *ptr3 = malloc(23);
+  print_stack();
 
-  return 4;
+  return 114;
 }
 `
 
