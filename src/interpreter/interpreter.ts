@@ -4,8 +4,7 @@ import { LabeledStatement } from '../cTree'
 import {
   evaluateAssignmentExpression,
   evaluateBinaryExpression,
-  evaluatePostfixExpression,
-  evaluatePrefixExpression,
+  evaluateUnaryExpression,
 } from '../utils/operators'
 
 import { table } from 'table'
@@ -263,7 +262,13 @@ type Evaluator<T extends cTree.Node> = (node: T) => any
 
 const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   Literal: function (node: cTree.Literal): EvaluationResult {
-    return { value: node.value, typeSpecifier: null }
+    return {
+      value:
+        node.typeSpecifier === 'char' && typeof node.value == 'number'
+          ? String.fromCharCode(node.value)
+          : node.value,
+      typeSpecifier: null,
+    }
   },
   BinaryExpression: function (node: cTree.BinaryExpression): EvaluationResult {
     const left = actualValue(node.left)
@@ -274,29 +279,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
   },
 
-  PrefixExpression: function (node: cTree.PrefixExpression): EvaluationResult {
-    const right = actualValue(node.right)
-    console.log('right', right)
-    return {
-      value: evaluatePrefixExpression(right, node.operator || ''),
-      typeSpecifier: null,
-    }
-  },
-
-  PostfixExpression: function (
-    node: cTree.PostfixExpression
-  ): EvaluationResult {
-    const left = actualValue(node.left)
-    return {
-      value: evaluatePostfixExpression(left, node.operator || ''),
-      typeSpecifier: null,
-    }
-  },
-
   Array: function (node: cTree.cArray) {
     const value = node.value.map((e) => evaluate(e))
     return {
-      typeSpecifier: 'Array',
+      typeSpecifier: node.typeSpecifier || 'Array',
       value,
       length: node.value.length,
     }
@@ -364,7 +350,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   // v = 45;
-  Assignment: function (node: cTree.Assignment) {
+  BinaryAssignment: function (node: cTree.BinaryAssignment) {
     const name: string = node.identifier
     const { address: leftAddress, typeSpecifier: leftType } =
       getEnvironmentValue(name)
@@ -392,7 +378,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     const value = evaluateAssignmentExpression(
-      node.operator || '',
+      node.operator,
       leftValue,
       rightValue
     )
@@ -404,6 +390,44 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     memoryAllocateBasic(value, leftType, leftAddress)
+  },
+
+  // v++ or v--
+  PostfixAssignment: function (node: cTree.UnaryAssignment) {
+    const name: string = node.identifier
+
+    const { address: leftAddress, typeSpecifier: leftType } =
+      getEnvironmentValue(name)
+
+    const leftValue = memoryRetrieveBasic(leftAddress, leftType)
+
+    const newValue = evaluateUnaryExpression(leftValue, node.operator)
+
+    memoryAllocateBasic(newValue, leftType, leftAddress)
+
+    return {
+      value: leftValue,
+      leftType,
+    }
+  },
+
+  // ++v or --v
+  PrefixAssignment: function (node: cTree.UnaryAssignment) {
+    const name: string = node.identifier
+
+    const { address: rightAddress, typeSpecifier: rightType } =
+      getEnvironmentValue(name)
+
+    const rightValue = memoryRetrieveBasic(rightAddress, rightType)
+
+    const newValue = evaluateUnaryExpression(rightValue, node.operator)
+
+    memoryAllocateBasic(newValue, rightType, rightAddress)
+
+    return {
+      value: memoryRetrieveBasic(rightAddress, rightType),
+      rightType,
+    }
   },
 
   // *p = 34;
@@ -658,12 +682,27 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
   },
 
-  PrintHeap: function (node: cTree.PrintHeap) {
+  PrintHeap: function (node: cTree.PrintMemory) {
     printHeap()
   },
 
+  PrintStack: function (node: cTree.PrintMemory) {
+    printStack()
+  },
+
   Print: function (node: cTree.Print) {
-    console.log(actualValue(node.value))
+    let output
+    if (node.value.type === 'Array') {
+      const array = node.value
+
+      const values = array.value.map((v) => actualValue(v))
+
+      output = array.typeSpecifier === 'char[]' ? values.join('') : values
+    } else {
+      output = actualValue(node.value)
+    }
+
+    console.log(output)
   },
 
   // STATEMENTS
@@ -869,6 +908,51 @@ const printHeap = () => {
   dispathchTable(
     table(columnNames.concat(nodes.sort((a, b) => a[0] - b[0])), config)
   )
+}
+
+export function printStack() {
+  const columnNames = [['ADDRESS', 'NAME', 'TYPE', 'VALUE']]
+  const nodes = []
+
+  for (let frame of ENVIRONMENT) {
+    const identifiers = Object.entries(frame)
+    for (let [identifier, variable] of identifiers) {
+      const address = variable.address
+
+      if (!isInStack(address)) continue
+
+      const typeSpecifier = variable.typeSpecifier
+
+      if (typeSpecifier.includes('[]')) {
+        const elementType = typeSpecifier.replace('[]', '')
+        const value =
+          '[' +
+          evaluateArray(address, address + (variable.size || 0), elementType) +
+          ']'
+        const stackNode = [address, identifier, typeSpecifier, value]
+
+        nodes.push(stackNode)
+      } else {
+        const value = memoryRetrieveBasic(address, typeSpecifier)
+        const stackNode = [address, identifier, typeSpecifier, value]
+        nodes.push(stackNode)
+      }
+    }
+  }
+
+  dispathchTable(table(columnNames.concat(nodes.sort((a, b) => a[0] - b[0]))))
+}
+
+export function evaluateArray(
+  startAddress: number,
+  endAddress: number,
+  typeSpecifier: string
+) {
+  const result = []
+  for (let i = startAddress; i < endAddress; i += getTypeSize(typeSpecifier)) {
+    result.push(memoryRetrieveBasic(i, typeSpecifier))
+  }
+  return result
 }
 
 export function evaluate(node: cTree.Node) {
