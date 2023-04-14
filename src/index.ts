@@ -8,15 +8,10 @@ export default run
 const code = ` 
 int main() {
     int n = 5;
-    return multiplyNumbers(n);
-}
-
-int multiplyNumbers(int n) {
-    if (n>=1) {
-      return n*multiplyNumbers(n-1);
-    }
-    else {
-      return 1;
+    for (int i = 0; i < 10; ++i;) {
+      if ( i==4 ) {
+        return i;
+      }
     }
 }
 

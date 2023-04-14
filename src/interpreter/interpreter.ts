@@ -507,7 +507,14 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     memoryAllocateBasic(value, leftType, addr)
   },
+  ReturnStatement(node: cTree.ReturnStatement) {
+    const result = evaluate(node.value)
 
+    return {
+      value: result,
+      type: 'return',
+    }
+  },
   FunctionApplication(node: cTree.FunctionApplication): EvaluationResult {
     const frameStart = stackFree
 
@@ -522,8 +529,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     formals.forEach((formal, index) => {
       const name = formal.name
       const typeSpecifier = formal.typeSpecifier
-      const value = evaluate(args[index])
-
+      const value = actualValue(args[index])
       const address = pushOnStack(value, typeSpecifier)
       extendEnvironment(name, address, typeSpecifier, [])
     })
@@ -533,8 +539,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     let result = undefined
 
     for (const s of statements) {
-      if (s.type === 'ReturnStatement') {
-        result = evaluate(s.value)
+      result = evaluate(s)
+      if (result?.type === 'return') {
+        result = result.value
+
         if (result.typeSpecifier?.includes('*') && isInStack(result.value)) {
           dispatchWarning(`function returns address of local variable `)
         }
@@ -549,7 +557,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
         }
         return result
       }
-      result = evaluate(s)
     }
 
     // Warning : returning different type
@@ -748,7 +755,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     evaluate(node.initial)
     let condition = evaluate(node.condition)
     while (condition.value) {
-      evaluate(node.body)
+      const result = evaluate(node.body)
+      if (result?.type === 'return') {
+        return result
+      }
       evaluate(node.action)
       condition = evaluate(node.condition)
     }
@@ -757,7 +767,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   WhileLoop: function (node: cTree.WhileLoop) {
     let condition = evaluate(node.condition)
     while (condition.value) {
-      evaluate(node.body)
+      const result = evaluate(node.body)
+      if (result?.type === 'return') {
+        return result
+      }
       condition = evaluate(node.condition)
     }
   },
@@ -772,14 +785,17 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   SequenceStatement: function (node: cTree.SequenceStatement) {
-    let res
+    let result
     const free = stackFree
     ENVIRONMENT.push({})
     for (const instr of node.statements) {
-      res = evaluate(instr)
+      result = evaluate(instr)
+      if (result?.type === 'return') {
+        return result
+      }
     }
     ENVIRONMENT.pop()
-    return res
+    return result
   },
 
   // Declarations
@@ -970,7 +986,6 @@ export function evaluateArray(
 }
 
 export function evaluate(node: cTree.Node) {
-  console.log('node is,', node)
   const result = evaluators[node.type](node)
   return result
 }

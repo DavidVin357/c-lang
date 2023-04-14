@@ -49,6 +49,7 @@ import {
   PrefixAssignmentContext,
   PrintStackContext,
   InitializationListContext,
+  SequenceStatementContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -393,7 +394,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       type: 'ExpressionStatement',
       expression: new ExpressionGenerator().visit(ctx.expression()),
     }
-  }  
+  }
 
   visitArrayDeclaration(ctx: ArrayDeclarationContext): cTree.ArrayDeclaration {
     return {
@@ -503,17 +504,28 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       identifier: ctx.Identifier().text,
     }
   }
-
-  visitCompoundStatement(
-    ctx: CompoundStatementContext
+  visitSequenceStatement(
+    ctx: SequenceStatementContext
   ): cTree.SequenceStatement {
-    const childStatements = ctx.blockItemList()?.children
+    const childStatements = ctx.statement()
     return {
       type: 'SequenceStatement',
       statements: childStatements
         ? childStatements.map((child) => this.visit(child))
         : [],
     }
+  }
+
+  visitCompoundStatement(
+    ctx: CompoundStatementContext
+  ): cTree.SequenceStatement {
+    const sequenceStatement = ctx.sequenceStatement()
+    return sequenceStatement
+      ? this.visitSequenceStatement(sequenceStatement)
+      : {
+          type: 'SequenceStatement',
+          statements: [],
+        }
   }
 
   visitReturnStatement(ctx: ReturnStatementContext): cTree.ReturnStatement {
