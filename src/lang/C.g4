@@ -77,12 +77,17 @@ Identifier
 pointer: 
     '*' ('*')* Identifier;
 
-declaration
-    : qualifiers=typeQualifiers typeSpecifier Identifier ';'
-    ;
 
 initialization
-    : qualifiers=typeQualifiers typeSpecifier Identifier '=' casting? value=expression ';'
+    : qualifiers=typeQualifiers typeSpecifier Identifier ('=' casting? value=expression)? ';';
+
+initializationListPart
+    : Identifier ('=' casting? value=expression)?
+    ;
+
+initializationList
+    : qualifiers=typeQualifiers typeSpecifier initializationListPart
+      (',' initializationListPart)+ ';'
     ;
 
 binaryAssignmentOperator
@@ -227,8 +232,8 @@ whileLoop
     
 statement
     :   expressionStatement
-    |   declaration
     |   initialization
+    |   initializationList
     |   conditionalStatement
     |   compoundStatement
     |   switchStatement

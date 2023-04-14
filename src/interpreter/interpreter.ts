@@ -317,10 +317,17 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     let {
       typeSpecifier: rightType,
-      value,
       size,
+      value,
       length: arrLength,
-    } = evaluate(node.value)
+    } = node.value
+      ? evaluate(node.value)
+      : {
+          typeSpecifier: leftType,
+          size: getTypeSize(leftType),
+          value: 0,
+          length: 0,
+        }
 
     if (arrLength) {
       size = arrLength * getTypeSize(leftType.replace('[]', ''))
@@ -347,6 +354,12 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const address = pushOnStack(value, leftType)
 
     extendEnvironment(name, address, leftType, typeQualifiers, size)
+  },
+
+  VariableInitializationList: function (
+    node: cTree.VariableInitializationList
+  ) {
+    node.initializations.map((i) => evaluate(i))
   },
 
   // v = 45;
@@ -713,7 +726,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   ConditionalStatement: function (node: cTree.ConditionalStatement) {
-    const condition = evaluate(node.condition)
+    const condition = actualValue(node.condition)
     if (condition) {
       return evaluate(node.truebody)
     } else {
@@ -773,14 +786,15 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
   // int v;
   VariableDeclaration: function (node: cTree.VariableDeclaration) {
-    const name = node.identifier
     const typeSpecifier = node.typeSpecifier.value
     const typeQualifiers = node.typeQualifiers.value.map(
       (t: cTree.TypeQualifier) => t.value
     )
 
-    const address = pushOnStack(null, typeSpecifier)
-    extendEnvironment(name, address, typeSpecifier, typeQualifiers)
+    for (const name of node.identifiers) {
+      const address = pushOnStack(null, typeSpecifier)
+      extendEnvironment(name, address, typeSpecifier, typeQualifiers)
+    }
   },
 
   // char [] arr;
@@ -956,6 +970,7 @@ export function evaluateArray(
 }
 
 export function evaluate(node: cTree.Node) {
+  console.log('node is,', node)
   const result = evaluators[node.type](node)
   return result
 }

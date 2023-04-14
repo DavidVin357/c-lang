@@ -6,7 +6,6 @@ import {
   ConditionalStatementContext,
   CParser,
   DecimalContext,
-  DeclarationContext,
   ExpressionStatementContext,
   FractionContext,
   IdentifierContext,
@@ -49,6 +48,7 @@ import {
   PostfixAssignmentContext,
   PrefixAssignmentContext,
   PrintStackContext,
+  InitializationListContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -179,7 +179,6 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
 
   visitString(ctx: StringContext): cTree.cArray {
     const str = ctx.STRING().text
-    console.log('str', str)
     return {
       type: 'Array',
       value: str
@@ -394,17 +393,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       type: 'ExpressionStatement',
       expression: new ExpressionGenerator().visit(ctx.expression()),
     }
-  }
-
-  // Declarations & Initializations
-  visitDeclaration(ctx: DeclarationContext): cTree.VariableDeclaration {
-    return {
-      type: 'VariableDeclaration',
-      typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
-      typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
-      identifier: ctx.Identifier().text,
-    }
-  }
+  }  
 
   visitArrayDeclaration(ctx: ArrayDeclarationContext): cTree.ArrayDeclaration {
     return {
@@ -425,15 +414,45 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     ctx: InitializationContext
   ): cTree.VariableInitialization {
     const castingType = ctx.casting()?.typeSpecifier()
+    const typeSpecifier = this.typeGenerator.visitTypeSpecifier(
+      ctx.typeSpecifier()
+    )
+    const typeQualifiers = this.typeGenerator.visitChildren(ctx._qualifiers)
+
     return {
       type: 'VariableInitialization',
-      typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
-      typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
-      castingType: castingType
-        ? this.typeGenerator.visitTypeSpecifier(castingType)
-        : null,
+      castingType:
+        castingType && this.typeGenerator.visitTypeSpecifier(castingType),
+      typeSpecifier,
+      typeQualifiers,
       identifier: ctx.Identifier().text,
-      value: this.expressionGenerator.visit(ctx._value),
+      value: ctx._value && this.expressionGenerator.visit(ctx._value),
+    }
+  }
+
+  visitInitializationList(
+    ctx: InitializationListContext
+  ): cTree.VariableInitializationList {
+    const typeSpecifier = this.typeGenerator.visitTypeSpecifier(
+      ctx.typeSpecifier()
+    )
+    const typeQualifiers = this.typeGenerator.visitChildren(ctx._qualifiers)
+
+    const initializations: cTree.VariableInitialization[] = ctx
+      .initializationListPart()
+      .map((i) => {
+        const expression = i.expression()
+        return {
+          type: 'VariableInitialization',
+          typeSpecifier,
+          typeQualifiers,
+          identifier: i.Identifier().text,
+          value: expression && this.expressionGenerator.visit(expression),
+        }
+      })
+    return {
+      type: 'VariableInitializationList',
+      initializations,
     }
   }
 
@@ -451,7 +470,6 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
         value: typeSpecifier + '[]',
       },
       typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
-      castingType: null,
       identifier: ctx.Identifier().text,
       value: array,
     }
@@ -490,7 +508,6 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     ctx: CompoundStatementContext
   ): cTree.SequenceStatement {
     const childStatements = ctx.blockItemList()?.children
-
     return {
       type: 'SequenceStatement',
       statements: childStatements
