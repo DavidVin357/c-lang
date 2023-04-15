@@ -317,10 +317,17 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     let {
       typeSpecifier: rightType,
-      value,
       size,
+      value,
       length: arrLength,
-    } = evaluate(node.value)
+    } = node.value
+      ? evaluate(node.value)
+      : {
+          typeSpecifier: leftType,
+          size: getTypeSize(leftType),
+          value: 0,
+          length: 0,
+        }
 
     if (arrLength) {
       size = arrLength * getTypeSize(leftType.replace('[]', ''))
@@ -347,6 +354,12 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const address = pushOnStack(value, leftType)
 
     extendEnvironment(name, address, leftType, typeQualifiers, size)
+  },
+
+  VariableInitializationList: function (
+    node: cTree.VariableInitializationList
+  ) {
+    node.initializations.map((i) => evaluate(i))
   },
 
   // v = 45;
@@ -494,7 +507,14 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     memoryAllocateBasic(value, leftType, addr)
   },
+  ReturnStatement(node: cTree.ReturnStatement) {
+    const result = evaluate(node.value)
 
+    return {
+      value: result,
+      type: 'return',
+    }
+  },
   FunctionApplication(node: cTree.FunctionApplication): EvaluationResult {
     const frameStart = stackFree
 
@@ -509,8 +529,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     formals.forEach((formal, index) => {
       const name = formal.name
       const typeSpecifier = formal.typeSpecifier
-      const value = evaluate(args[index])
-
+      const value = actualValue(args[index])
       const address = pushOnStack(value, typeSpecifier)
       extendEnvironment(name, address, typeSpecifier, [])
     })
@@ -520,8 +539,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     let result = undefined
 
     for (const s of statements) {
-      if (s.type === 'ReturnStatement') {
-        result = evaluate(s.value)
+      result = evaluate(s)
+      if (result?.type === 'return') {
+        result = result.value
+
         if (result.typeSpecifier?.includes('*') && isInStack(result.value)) {
           dispatchWarning(`function returns address of local variable `)
         }
@@ -536,7 +557,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
         }
         return result
       }
-      result = evaluate(s)
     }
 
     // Warning : returning different type
@@ -713,7 +733,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   ConditionalStatement: function (node: cTree.ConditionalStatement) {
-    const condition = evaluate(node.condition)
+    const condition = actualValue(node.condition)
     if (condition) {
       return evaluate(node.truebody)
     } else {
@@ -735,7 +755,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     evaluate(node.initial)
     let condition = evaluate(node.condition)
     while (condition.value) {
-      evaluate(node.body)
+      const result = evaluate(node.body)
+      if (result?.type === 'return') {
+        return result
+      }
       evaluate(node.action)
       condition = evaluate(node.condition)
     }
@@ -744,7 +767,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   WhileLoop: function (node: cTree.WhileLoop) {
     let condition = evaluate(node.condition)
     while (condition.value) {
-      evaluate(node.body)
+      const result = evaluate(node.body)
+      if (result?.type === 'return') {
+        return result
+      }
       condition = evaluate(node.condition)
     }
   },
@@ -759,28 +785,32 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   SequenceStatement: function (node: cTree.SequenceStatement) {
-    let res
+    let result
     const free = stackFree
     ENVIRONMENT.push({})
     for (const instr of node.statements) {
-      res = evaluate(instr)
+      result = evaluate(instr)
+      if (result?.type === 'return') {
+        return result
+      }
     }
     ENVIRONMENT.pop()
-    return res
+    return result
   },
 
   // Declarations
 
   // int v;
   VariableDeclaration: function (node: cTree.VariableDeclaration) {
-    const name = node.identifier
     const typeSpecifier = node.typeSpecifier.value
     const typeQualifiers = node.typeQualifiers.value.map(
       (t: cTree.TypeQualifier) => t.value
     )
 
-    const address = pushOnStack(null, typeSpecifier)
-    extendEnvironment(name, address, typeSpecifier, typeQualifiers)
+    for (const name of node.identifiers) {
+      const address = pushOnStack(null, typeSpecifier)
+      extendEnvironment(name, address, typeSpecifier, typeQualifiers)
+    }
   },
 
   // char [] arr;

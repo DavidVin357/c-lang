@@ -199,16 +199,21 @@ export type VariableDeclaration = {
   type: 'VariableDeclaration'
   typeSpecifier: TypeSpecifier
   typeQualifiers: SequenceType
-  identifier: string
+  identifiers: string[]
 }
 
 export type VariableInitialization = {
   type: 'VariableInitialization'
   typeSpecifier: TypeSpecifier
   typeQualifiers: SequenceType
-  castingType: TypeSpecifier | null
+  castingType?: TypeSpecifier
   identifier: string
-  value: Expression
+  value?: Expression
+}
+
+export type VariableInitializationList = {
+  type: 'VariableInitializationList'
+  initializations: VariableInitialization[]
 }
 
 export type ParameterDeclaration = {
@@ -283,6 +288,7 @@ export type DoWhileLoop = {
 export interface StatementMap {
   VariableDeclaration: VariableDeclaration
   VariableInitialization: VariableInitialization
+  VariableInitializationList: VariableInitializationList
   ExpressionStatement: ExpressionStatement
   SequenceStatement: SequenceStatement
   ConditionalStatement: ConditionalStatement

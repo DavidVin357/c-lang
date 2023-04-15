@@ -77,12 +77,17 @@ Identifier
 pointer: 
     '*' ('*')* Identifier;
 
-declaration
-    : qualifiers=typeQualifiers typeSpecifier Identifier ';'
-    ;
 
 initialization
-    : qualifiers=typeQualifiers typeSpecifier Identifier '=' casting? value=expression ';'
+    : qualifiers=typeQualifiers typeSpecifier Identifier ('=' casting? value=expression)? ';';
+
+initializationListPart
+    : Identifier ('=' casting? value=expression)?
+    ;
+
+initializationList
+    : qualifiers=typeQualifiers typeSpecifier initializationListPart
+      (',' initializationListPart)+ ';'
     ;
 
 binaryAssignmentOperator
@@ -180,7 +185,7 @@ expressionStatement
     ;
 
 conditionalStatement
-    :   'if' '(' condition=expression ')' truebody=statement ('else' falsebody=statement)?
+    :   'if' '(' condition=expression ')' truebody=compoundStatement ('else' falsebody=compoundStatement)?
     ;
 
 switchStatement
@@ -188,8 +193,8 @@ switchStatement
     ;
 
 labeledStatement
-    :   'case' condition=expression ':' body=statement breakStatement?
-    |   'default' ':' body=statement breakStatement?
+    :   'case' condition=expression ':' body=sequenceStatement breakStatement?
+    |   'default' ':' body=sequenceStatement breakStatement?
     ;
 
 breakStatement
@@ -197,11 +202,11 @@ breakStatement
     ;
 
 compoundStatement
-    :   '{' blockItemList? '}'
+    :   '{' sequenceStatement '}'
     ;
 
-blockItemList
-    :   statement+
+sequenceStatement
+    :   statement*
     ;
 
 switchBodyList
@@ -216,19 +221,19 @@ returnStatement
     : 'return' expression ';';
 
 forLoop
-    :   'for' '(' initial=initialization condition=expression ';' action=statement ')' body=statement
+    :   'for' '(' initial=initialization condition=expression ';' action=statement ')' body=compoundStatement
     ;
 doWhileLoop
-    :   'do' body=statement 'while' '(' condition=expression ')'
+    :   'do' body=compoundStatement 'while' '(' condition=expression ')'
     ;
 whileLoop
-    :   'while' '(' condition=expression ')' body=statement
+    :   'while' '(' condition=expression ')' body=compoundStatement
     ;
     
 statement
     :   expressionStatement
-    |   declaration
     |   initialization
+    |   initializationList
     |   conditionalStatement
     |   compoundStatement
     |   switchStatement
