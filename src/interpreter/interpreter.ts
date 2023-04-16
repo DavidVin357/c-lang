@@ -16,6 +16,7 @@ import {
   isPointerType,
   getPointerValueType,
 } from './helpers'
+import { logPrintf } from '../logger'
 
 const printf = require('printf')
 
@@ -803,7 +804,8 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   Printf: function (node: cTree.Printf) {
     const args = node.args.map((arg) => {
       const v = evaluate(arg)
-      const isArray = v.typeSpecifier.includes('[]')
+      const isArray =
+        v.typeSpecifier.includes('[]') || v.typeSpecifier === 'char*'
       if (isArray) {
         const typeSpecifier = v.typeSpecifier
         const size = v?.size || v.length * getTypeSize(typeSpecifier)
@@ -816,12 +818,16 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
         : result.value
     })
     try {
+      let output = ''
       if (args.length > 1) {
-        console.log(printf(...args))
+        output = printf(...args)
       } else {
-        console.log(args[0])
+        output = args[0].toString()
       }
+      process.stdout.write(output)
+      logPrintf(output)
     } catch (e) {
+      console.log('ERROR', e)
       throw new Error('Invalid printf argument')
     }
   },
@@ -996,7 +1002,6 @@ function evaluateSwitchBody(
   }
   // no matching case found, execute default body
   if (defaultBody) {
-    console.log('evaluating default case...')
     return evaluate(defaultBody)
   }
 }

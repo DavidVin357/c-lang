@@ -87,9 +87,10 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
   }
 
   visitChar(ctx: CharContext): cTree.Literal {
+    const char = ctx.text.replaceAll("'", '')
     return {
       type: 'Literal',
-      value: ctx.text.replace("'", '').charCodeAt(0),
+      value: char === '\0' ? 48 : char.charCodeAt(0),
       raw: ctx.text,
     }
   }
