@@ -201,8 +201,8 @@ switchStatement
     ;
 
 labeledStatement
-    :   'case' condition=expression ':' body=sequenceStatement breakStatement?
-    |   'default' ':' body=sequenceStatement breakStatement?
+    :   'case' condition=expression ':' body=statement breakStatement?
+    |   'default' ':' body=statement breakStatement?
     ;
 
 breakStatement

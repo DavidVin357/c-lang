@@ -167,4 +167,78 @@ int main()
     return 0; 
 } 
 `
-console.log('\n', run(test8))
+
+// Calculator using switch and printf
+const test9 = `
+int main() {
+    char operation = '/';
+    double n1 = 5.2, n2 = 4.7;
+
+    switch(operation)
+    {
+        case '+':
+            printf("%.1lf + %.1lf = %.1lf",n1, n2, n1+n2);
+            break;
+
+        case '-':
+            printf("%.1lf - %.1lf = %.1lf",n1, n2, n1-n2);
+            break;
+
+        case '*':
+            printf("%.1lf * %.1lf = %.1lf",n1, n2, n1*n2);
+            break;
+
+        case '/':
+            printf("%.1lf / %.1lf = %.1lf",n1, n2, n1/n2);
+            break;
+
+        default:
+            printf("Error! operator is not correct");
+    }
+
+    return 0;
+}
+
+`
+
+const test10 = `
+void isPalindrome(char string[])
+{
+    char* ptr;
+    char* rev;
+
+    ptr = string;
+    while (*ptr != '0') {
+        ++ptr;
+    }
+    --ptr;
+
+    rev = string;
+    while (ptr >= rev) {
+        if (*ptr == *rev) {
+            --ptr;
+            rev++;
+        }
+        else {
+            break;
+        }
+    }
+
+    if (rev > ptr){
+         printf("String is Palindrome");
+        }
+    else {
+        printf("String is not a Palindrome");
+    }
+}
+
+int main()
+{
+    char str1[1000] = "madam";
+    char str2[1000] = "madan";
+    isPalindrome(str1);
+    isPalindrome(str2);
+
+    return 0;
+}
+`

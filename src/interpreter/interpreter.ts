@@ -421,6 +421,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     if (
       (rightType?.includes('*') || leftType.includes('*')) &&
       !rightType?.includes('void') &&
+      !rightType?.includes('[]') &&
       rightType !== leftType
     ) {
       dispatchWarning(
@@ -449,9 +450,18 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const { address: leftAddress, typeSpecifier: leftType } =
       getEnvironmentValue(name)
 
+    const isPointer = isPointerType(leftType)
+    const typeSize = isPointer ? getTypeSize(getPointerValueType(leftType)) : 1
+
     const leftValue = memoryRetrieveBasic(leftAddress, leftType)
 
-    const newValue = evaluateUnaryExpression(leftValue, node.operator)
+    let newValue
+    newValue = evaluateUnaryExpression(
+      leftValue,
+      node.operator,
+      isPointer,
+      typeSize
+    )
 
     memoryAllocateBasic(newValue, leftType, leftAddress)
 
@@ -497,6 +507,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     if (
       (leftType?.includes('*') || rightType?.includes('*')) &&
       !rightType?.includes('void') &&
+      !rightType?.includes('[]') &&
       leftType !== rightType
     ) {
       dispatchWarning(
@@ -879,15 +890,12 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
   SequenceStatement: function (node: cTree.SequenceStatement) {
     let result
-    const free = stackFree
-    ENVIRONMENT.push({})
     for (const instr of node.statements) {
       result = evaluate(instr)
       if (result?.type === 'return' || result?.type === 'break') {
         return result
       }
     }
-    ENVIRONMENT.pop()
     return result
   },
 

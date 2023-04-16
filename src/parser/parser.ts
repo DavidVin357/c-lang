@@ -589,7 +589,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   visitSwitchStatement(ctx: SwitchStatementContext): cTree.SwitchStatement {
     return {
       type: 'SwitchStatement',
-      condition: new ExpressionGenerator().visit(ctx._condition),
+      condition: this.expressionGenerator.visit(ctx._condition),
       body: this.visitSwitchBodyStatement(ctx._body),
     }
   }
