@@ -17,7 +17,8 @@ export type Pointer = {
 
 export type PointerExpression = {
   type: 'PointerExpression'
-  name: string
+  name?: string
+  address?: Expression
   multiplicity: number
 }
 
@@ -320,7 +321,6 @@ export interface StatementMap {
   FunctionDeclaration: FunctionDeclaration
   ArrayDeclaration: ArrayDeclaration
   PrintMemory: PrintMemory
-  Print: Print
   Printf: Printf
   ForLoop: ForLoop
   DoWhileLoop: DoWhileLoop

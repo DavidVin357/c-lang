@@ -74,8 +74,12 @@ Identifier
     :   Nondigit (Nondigit|Digit)*
     ;
 
+pointerPart
+    : '(' inner=expression')' 
+    | Identifier; 
+    
 pointer: 
-    '*' ('*')* Identifier;
+    '*' ('*')* pointerPart;
 
 
 initialization
@@ -155,7 +159,6 @@ printHeap: 'print_heap' '(' ')' ';';
 
 printStack: 'print_stack' '(' ')' ';';
 
-print: 'print' '(' value=expression ')' ';';
 printf: 'printf' '(' expression (',' expression)*')' ';';
 
 variableAccess
@@ -180,12 +183,15 @@ expression
    | left=expression operator=LOGICAL_AND right=expression      # LogicalAnd
    | left=expression operator=LOGICAL_OR right=expression       # LogicalOr
    | pointer                                                    # PointerExpression 
-   | assignmentList                                                 # AssignmentExpression
+   | assignmentList                                             # AssignmentExpression
    | arrayValueAssignment                                       # ArrayValueAssignmentExpression
    | pointerValueAssignment                                     # PointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
    | free                                                       # FreeExpression
    | array                                                      # ArrayExpression 
+   | COMMENT                                                    # CommentExpression
+   | LINE_COMMENT                                               # LineCommentExpression
+   | INCLUDE                                                    # IncludeExpression
    ;
 
 expressionStatement
@@ -242,7 +248,16 @@ doWhileLoop
 whileLoop
     :   'while' '(' condition=expression ')' body=compoundStatement
     ;
-    
+
+COMMENT
+    : '/*' .*? '*/' -> skip
+;
+LINE_COMMENT
+    : '//' ~[\r\n]* -> skip
+;
+INCLUDE
+    :
+    '#include' ~[\r\n]* -> skip;
 statement
     :   expressionStatement
     |   arrayInitialization
@@ -262,7 +277,6 @@ statement
     |   whileLoop
     |   printHeap
     |   printStack
-    |   print
     |   printf
     ;
 

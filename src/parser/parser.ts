@@ -43,7 +43,6 @@ import {
   ForLoopContext,
   DoWhileLoopContext,
   WhileLoopContext,
-  PrintContext,
   BinaryAssignmentContext,
   PostfixAssignmentContext,
   PrefixAssignmentContext,
@@ -313,11 +312,14 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
   }
   visitPointer(ctx: PointerContext): cTree.PointerExpression {
     const pointers = ctx.MUL()
-    const name = ctx.Identifier().text
+    const name = ctx.pointerPart().Identifier()?.text
+    const addressExpression = ctx.pointerPart()._inner
+    const address = addressExpression && this.visit(addressExpression)
 
     return {
       type: 'PointerExpression',
       name,
+      address,
       multiplicity: pointers.length,
     }
   }
@@ -641,12 +643,6 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
-  visitPrint(ctx: PrintContext): cTree.Print {
-    return {
-      type: 'Print',
-      value: this.expressionGenerator.visit(ctx._value),
-    }
-  }
   visitPrintf(ctx: PrintfContext): cTree.Printf {
     const expressions = ctx
       .expression()
