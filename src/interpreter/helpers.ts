@@ -11,7 +11,6 @@ function isInt(val: number): boolean {
   )
 }
 function isLong(val: bigint): boolean {
-  console.log('long', val)
   return val <= LONG_MAX && val >= LONG_MIN
 }
 function isULong(val: bigint): boolean {
@@ -34,7 +33,10 @@ const getLiteralSize = (val: any) => {
   throw Error('Not a primitive type')
 }
 
-const getTypeSize = (type: string): number => {
+const getTypeSize = (type?: string): number => {
+  if (!type) {
+    return 0
+  }
   if (type.includes('*')) {
     return 8
   }
@@ -74,6 +76,14 @@ const getTypeSize = (type: string): number => {
   }
 }
 
+const isPointerType = (typeSpecifier: any) => {
+  if (typeof typeSpecifier === 'string' && typeSpecifier.includes('*')) {
+    return true
+  }
+  return false
+}
+const getPointerValueType = (type: string) => type.slice(0, type.length - 1)
+
 const dispatchWarning = (message: string) => {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
@@ -103,4 +113,11 @@ const dispathchTable = (table: any) => {
   }
 }
 
-export { getTypeSize, dispatchWarning, dispathchTable, getLiteralSize }
+export {
+  getTypeSize,
+  getPointerValueType,
+  isPointerType,
+  dispatchWarning,
+  dispathchTable,
+  getLiteralSize,
+}

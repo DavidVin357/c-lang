@@ -113,6 +113,9 @@ prefixAssignment
 assignment:
     binaryAssignment | prefixAssignment | postfixAssignment;
     
+assignmentList
+    : assignment (',' assignment)*
+    ; 
 // e.g., *h = 43
 pointerValueAssignment
     : pointer operator=binaryAssignmentOperator value=expression
@@ -124,10 +127,10 @@ array
     ;
 
 arrayInitialization:
-    qualifiers=typeQualifiers typeSpecifier Identifier '['size=DECIMAL?']' '=' value=expression ';';
+    qualifiers=typeQualifiers typeSpecifier Identifier ('[' expression ']' | '[]') '=' value=expression ';';
 
 arrayDeclaration:
-    qualifiers = typeQualifiers typeSpecifier Identifier '['size=DECIMAL']' ';';
+    qualifiers=typeQualifiers typeSpecifier Identifier '['size=expression']' ';';
 
 arrayAccess:
     name=Identifier '[' index=expression ']';
@@ -153,6 +156,10 @@ printHeap: 'print_heap' '(' ')' ';';
 printStack: 'print_stack' '(' ')' ';';
 
 print: 'print' '(' value=expression ')' ';';
+printf: 'printf' '(' expression (',' expression)*')' ';';
+
+variableAccess
+    : Identifier ('[' index=expression ']')?;   
 
 expression
    : DECIMAL                                                    # Decimal
@@ -163,8 +170,9 @@ expression
    | functionApplication                                        # Application
    | '(' inner=expression ')'                                   # Parentheses
    | arrayAccess                                                # Access
-   | operator=VAR_ADDRESS right=Identifier                      # VarAddress
+   | operator=VAR_ADDRESS right=variableAccess                  # VarAddress
    | sizeof                                                     # SizeOfOperator
+   | operator=(NOT | SUB) right=expression                      # Unary
    | left=expression operator=(ADD | SUB) right=expression      # Additive
    | left=expression operator=(MUL | DIV | MOD ) right=expression  # Multiplicative
    | left=expression operator=(GREATER | GREATER_EQUAL | LESS | LESS_EQUAL) right=expression # Relational
@@ -172,7 +180,7 @@ expression
    | left=expression operator=LOGICAL_AND right=expression      # LogicalAnd
    | left=expression operator=LOGICAL_OR right=expression       # LogicalOr
    | pointer                                                    # PointerExpression 
-   | assignment                                                 # AssignmentExpression
+   | assignmentList                                                 # AssignmentExpression
    | arrayValueAssignment                                       # ArrayValueAssignmentExpression
    | pointerValueAssignment                                     # PointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
@@ -220,8 +228,13 @@ switchBodyStatement
 returnStatement
     : 'return' expression ';';
 
+loopInitial
+    :
+    initializationList | expressionStatement
+    ;
+
 forLoop
-    :   'for' '(' initial=initialization condition=expression ';' action=statement ')' body=compoundStatement
+    :   'for' '(' initial=loopInitial condition=expression ';' action=expression ')' body=compoundStatement
     ;
 doWhileLoop
     :   'do' body=compoundStatement 'while' '(' condition=expression ')'
@@ -232,6 +245,7 @@ whileLoop
     
 statement
     :   expressionStatement
+    |   arrayInitialization
     |   initialization
     |   initializationList
     |   conditionalStatement
@@ -241,7 +255,7 @@ statement
     |   switchBodyStatement
     |   functionDeclaration
     |   returnStatement
-    |   arrayInitialization
+    |   breakStatement
     |   arrayDeclaration
     |   forLoop
     |   doWhileLoop
@@ -249,10 +263,11 @@ statement
     |   printHeap
     |   printStack
     |   print
+    |   printf
     ;
 
 parameterDeclaration
-    :   typeSpecifier Identifier
+    :   typeSpecifier Identifier '[]'?
     ;
 
 parameterList

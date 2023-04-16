@@ -1,5 +1,3 @@
-import { BinaryOperator, AssignmentOperator } from '../cTree'
-
 export function evaluateBinaryExpression(
   left: any,
   right: any,
@@ -64,6 +62,10 @@ export function evaluateUnaryExpression(right: any, operator: string) {
       return ++right
     case '--':
       return --right
+    case '!':
+      return !right ? 1 : 0
+    case '-':
+      return -right
     default:
       return undefined
   }
