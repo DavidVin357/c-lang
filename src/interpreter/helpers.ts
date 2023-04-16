@@ -131,11 +131,13 @@ const dispathchTable = (table: any) => {
 
 const dispatchPrint = (output: string) => {
   if (typeof window !== 'undefined') {
-    new CustomEvent('printf', {
-      detail: {
-        message: output,
-      },
-    })
+    window.dispatchEvent(
+      new CustomEvent('printf', {
+        detail: {
+          message: output,
+        },
+      })
+    )
   } else {
     process.stdout.write(output)
   }

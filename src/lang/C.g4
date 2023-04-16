@@ -26,7 +26,7 @@ DECIMAL: [0-9]+;
 FRACTION: Fraction;
 
 CHAR: '\'' . '\'';
-STRING: '"' .*? '"';
+STRING: '"' (.)*? '"';
 
 COMMENT
     : '/*' .*? '*/' -> skip
