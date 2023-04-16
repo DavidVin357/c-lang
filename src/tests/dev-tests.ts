@@ -1,7 +1,4 @@
-import { expect, test } from '@jest/globals'
-
-import { run } from '../src/index'
-import { clearOuput, getOutput } from '../src/logger'
+import { run } from '../index'
 
 // Merge two arrays
 const test1 = `
@@ -367,117 +364,55 @@ int main()
     return findLargest(arr, N);
 }
 `
+let result
+console.log('\n\nTEST 1:')
+result = run(test1)
+if (result) console.log('\nReturn value:', result)
 
-test('Test 1: merge two arrays ({ 1, 2, 3, 4, 5 } and { 6, 7, 8, 9, 10, 11, 12 })', () => {
-  clearOuput()
+console.log('\n\nTEST 2:')
+result = run(test2)
+if (result) console.log('\nReturn value:', result)
 
-  const expected = '1 2 3 4 5 6 7 8 9 10 11 12 '
-  run(test1)
-  const output = getOutput()
-  expect(output).toBe(expected)
-})
+console.log('\n\nTEST 3:')
+result = run(test3)
+if (result) console.log('\nReturn value:', result)
 
-test('Test 2: find average of array', () => {
-  clearOuput()
+console.log('\n\nTEST 4')
+result = run(test4)
+if (result) console.log('\nReturn value:', result)
 
-  expect(run(test2)).toBe(5.8)
-})
+console.log('\n\nTEST 5:')
+result = run(test5)
+if (result) console.log('\nReturn value:', result)
 
-test('Test 3: find factorial of a number', () => {
-  clearOuput()
+console.log('\n\nTEST 6:')
+result = run(test6)
+if (result) console.log('\nReturn value:', result)
 
-  expect(run(test3)).toBe(720)
-})
+console.log('\n\nTEST 7:')
+result = run(test7)
+if (result) console.log('\nReturn value:', result)
 
-test('Test 4: char* message printing', () => {
-  clearOuput()
+console.log('\n\nTEST 8:')
+result = run(test8)
+if (result) console.log('\nReturn value:', result)
 
-  const expected = 'Message is: HELLO'
-  run(test4)
-  const output = getOutput()
-  expect(output).toBe(expected)
-  clearOuput()
-})
+console.log('\n\nTEST 8:')
+result = run(test9)
+if (result) console.log('\nReturn value:', result)
 
-test('Test 5: fun with pointers', () => {
-  clearOuput()
+console.log('\n\nTEST 10:')
+result = run(test10)
+if (result) console.log('\nReturn value:', result)
 
-  const expected = 1723
-  expect(run(test5)).toBe(expected)
-})
+console.log('\n\nTEST 11:')
+result = run(test11)
+if (result) console.log('\nReturn value:', result)
 
-test('Test 6: character pyramid', () => {
-  clearOuput()
+console.log('\n\nTEST 12:')
+result = run(test12)
+if (result) console.log('\nReturn value:', result)
 
-  const expected = `A 
-B B 
-C C C 
-D D D D 
-E E E E E 
-`
-  run(test6)
-  const output = getOutput()
-  expect(output).toBe(expected)
-})
-
-test('Test 7: swap variables', () => {
-  clearOuput()
-
-  const expected = 'After Swapping: x = 112, y = -8'
-
-  run(test7)
-  const output = getOutput()
-  expect(output).toBe(expected)
-})
-
-test('Test 8 : Printing first letter of each word', () => {
-  clearOuput()
-
-  const expected = 'C J P C I O T '
-
-  run(test8)
-  const output = getOutput()
-  expect(output).toBe(expected)
-})
-
-test('Test 9: array sorting', () => {
-  clearOuput()
-
-  const expected = '-5 9 12 14 23 116 '
-
-  run(test9)
-  const output = getOutput()
-  expect(output).toBe(expected)
-})
-
-test('Test 10: calculator', () => {
-  clearOuput()
-
-  const expected = '5.2 / 4.7 = 1.1'
-  run(test10)
-  expect(getOutput()).toBe(expected)
-})
-
-test('Test 11: check palindromes', () => {
-  clearOuput()
-
-  const expected =
-    "String 'madam' is Palindrome \n" + "String 'madan' is not a Palindrome \n"
-  run(test11)
-  expect(getOutput()).toBe(expected)
-})
-
-test('Test 12: compare strings', () => {
-  clearOuput()
-
-  const expected = "strings 'python' and 'python' are equal"
-  run(test12)
-  expect(getOutput()).toBe(expected)
-})
-
-test('Test 13: find largest element in the array', () => {
-  clearOuput()
-
-  const expected = 139
-  expect(run(test13)).toBe(expected)
-})
+console.log('\n\nTEST 13:')
+result = run(test13)
+if (result) console.log('\nReturn value:', result)

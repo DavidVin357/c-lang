@@ -28,6 +28,15 @@ FRACTION: Fraction;
 CHAR: '\'' . '\'';
 STRING: '"' .*? '"';
 
+COMMENT
+    : '/*' .*? '*/' -> skip
+;
+LINE_COMMENT
+    : '//' ~[\r\n]* -> skip
+;
+INCLUDE
+    :
+    '#include' ~[\r\n]* -> skip;
 
 fragment
 Nondigit
@@ -73,7 +82,6 @@ declarationSpecifier
 Identifier
     :   Nondigit (Nondigit|Digit)*
     ;
-
 pointerPart
     : '(' inner=expression')' 
     | Identifier; 
@@ -97,6 +105,7 @@ initializationList
 binaryAssignmentOperator
     :   '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='
     ;
+
 unaryAssignmentOperator
     : UNARY_ADD | UNARY_SUB;
 
@@ -106,10 +115,12 @@ binaryAssignment
     : Identifier operator=binaryAssignmentOperator casting? value=expression
     ;
 
+// e.g., a++
 postfixAssignment
     : Identifier operator=unaryAssignmentOperator
     ;
 
+// e.g., ++a
 prefixAssignment
     : operator=unaryAssignmentOperator Identifier
     ;
@@ -120,7 +131,8 @@ assignment:
 assignmentList
     : assignment (',' assignment)*
     ; 
-// e.g., *h = 43
+
+// e.g., *h = 43 or *(h++) = 23
 pointerValueAssignment
     : pointer operator=binaryAssignmentOperator value=expression
     ;
@@ -130,15 +142,19 @@ array
     |  STRING
     ;
 
+// int arr[5] = ... or int arr[] = ... 
 arrayInitialization:
     qualifiers=typeQualifiers typeSpecifier Identifier ('[' expression ']' | '[]') '=' value=expression ';';
 
+// int arr[5]; 
 arrayDeclaration:
     qualifiers=typeQualifiers typeSpecifier Identifier '['size=expression']' ';';
 
+// e.g. arr[2]
 arrayAccess:
     name=Identifier '[' index=expression ']';
 
+// arr[2] = ...
 arrayValueAssignment:
     arrayAccess operator=binaryAssignmentOperator casting? value=expression;
 
@@ -148,6 +164,7 @@ malloc
 
 sizeOfArgument:
     expression | typeSpecifier;
+
 sizeof
     : 'sizeof' '(' arg=sizeOfArgument ')'
     ;
@@ -160,6 +177,7 @@ printHeap: 'print_heap' '(' ')' ';';
 printStack: 'print_stack' '(' ')' ';';
 
 printf: 'printf' '(' expression (',' expression)*')' ';';
+
 
 variableAccess
     : Identifier ('[' index=expression ']')?;   
@@ -249,15 +267,7 @@ whileLoop
     :   'while' '(' condition=expression ')' body=compoundStatement
     ;
 
-COMMENT
-    : '/*' .*? '*/' -> skip
-;
-LINE_COMMENT
-    : '//' ~[\r\n]* -> skip
-;
-INCLUDE
-    :
-    '#include' ~[\r\n]* -> skip;
+
 statement
     :   expressionStatement
     |   arrayInitialization
