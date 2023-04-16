@@ -193,15 +193,26 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
 
   visitString(ctx: StringContext): cTree.cArray {
     const str = ctx.STRING().text
-    const charArr: cTree.Literal[] = str
-      .replaceAll('"', '')
-      .split('')
-      .map((c) => ({
+    const chars = Array.from(str.replaceAll('"', ''))
+    const charArr: cTree.Literal[] = []
+    for (let [i, char] of chars.entries()) {
+      if (chars[i - 1] === '\\') continue
+      if (char === '\\' && chars[i + 1] == 'n') {
+        charArr.push({
+          type: 'Literal',
+          value: `\n`.charCodeAt(0),
+          typeSpecifier: 'char',
+          raw: '\n',
+        })
+        continue
+      }
+      charArr.push({
         type: 'Literal',
-        value: c.charCodeAt(0),
+        value: char.charCodeAt(0),
         typeSpecifier: 'char',
-        raw: c,
-      }))
+        raw: char,
+      })
+    }
 
     charArr.push({
       type: 'Literal',
@@ -209,7 +220,6 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       typeSpecifier: 'char',
       raw: '\0',
     })
-
     return {
       type: 'Array',
       value: charArr,

@@ -77,11 +77,11 @@ const memoryAllocateBasic = (
   type: string,
   freeIndex: number
 ): number => {
-  if (type.includes('*')) {
+  if (isPointerType(type)) {
     MEMORY.setFloat64(freeIndex, value)
     return 8
   }
-  if (type.includes('[]')) {
+  if (isArrayType(type)) {
     let size = 0
     let index = freeIndex
     const valueType = type.replace('[]', '')
@@ -139,7 +139,7 @@ const memoryAllocateBasic = (
 }
 
 const memoryRetrieveBasic = (index: number, type: string): any => {
-  if (type.includes('*')) {
+  if (isPointerType(type)) {
     return MEMORY.getFloat64(index)
   }
   switch (type) {
@@ -348,7 +348,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     const size = getEnvironmentValue(name).size
     return {
-      value: typeSpecifier.includes('[]')
+      value: isArrayType(typeSpecifier)
         ? address
         : memoryRetrieveBasic(address, typeSpecifier),
       typeSpecifier,
@@ -384,7 +384,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     if (
-      (rightType?.includes('*') || leftType.includes('*')) &&
+      (isPointerType(rightType) || isPointerType(leftType)) &&
       !rightType?.includes('void') &&
       rightType !== leftType
     ) {
@@ -425,9 +425,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
 
     const leftValue = memoryRetrieveBasic(leftAddress, leftType)
     if (
-      (rightType?.includes('*') || leftType.includes('*')) &&
+      (isPointerType(rightType) || isPointerType(leftType)) &&
       !rightType?.includes('void') &&
-      !rightType?.includes('[]') &&
+      !isArrayType(rightType) &&
       rightType !== leftType
     ) {
       dispatchWarning(
@@ -518,9 +518,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const { value: rightValue, typeSpecifier: rightType } = evaluate(node.value)
 
     if (
-      (leftType?.includes('*') || rightType?.includes('*')) &&
+      (isPointerType(leftType) || isPointerType(rightType)) &&
       !rightType?.includes('void') &&
-      !rightType?.includes('[]') &&
+      !isArrayType(rightType) &&
       leftType !== rightType
     ) {
       dispatchWarning(
@@ -543,7 +543,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const { address, typeSpecifier } = getEnvironmentValue(name)
 
     // Get arrStart from pointer or local variable
-    const arrStart = typeSpecifier.includes('*')
+    const arrStart = isPointerType(typeSpecifier)
       ? memoryRetrieveBasic(address, typeSpecifier)
       : address
 
@@ -559,7 +559,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     if (
-      (rightType?.includes('*') || leftType.includes('*')) &&
+      (isPointerType(rightType) || isPointerType(leftType)) &&
       rightType !== leftType
     ) {
       dispatchWarning(
@@ -608,7 +608,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       const name = formal.name
       const typeSpecifier = formal.typeSpecifier
       let { value, size } = evaluate(args[index])
-      if (typeSpecifier.includes('[]')) {
+      if (isArrayType(typeSpecifier)) {
         let array = []
         const type = typeSpecifier.replace('[]', '')
         for (let i = value; i < value + size; i += getTypeSize(type)) {
@@ -629,7 +629,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       if (result?.type === 'return') {
         result = result.value
 
-        if (result.typeSpecifier?.includes('*') && isInStack(result.value)) {
+        if (isPointerType(result.typeSpecifier) && isInStack(result.value)) {
           dispatchWarning(`function returns address of local variable `)
         }
         // Remove stack frame
@@ -714,7 +714,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const { address, typeSpecifier } = getEnvironmentValue(name)
 
     // Get arrStart from pointer or local variable
-    const arrStart = typeSpecifier.includes('*')
+    const arrStart = isPointerType(typeSpecifier)
       ? memoryRetrieveBasic(address, typeSpecifier)
       : address
 
@@ -830,7 +830,8 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       const v = evaluate(arg)
 
       const isArray =
-        v.typeSpecifier.includes('[]') || v.typeSpecifier === 'char*'
+        // Evaluate and stringify array
+        isArrayType(v.typeSpecifier) || v.typeSpecifier === 'char*'
 
       // Evaluate and stringify array
       if (isArray) {
@@ -848,9 +849,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     try {
       let output = ''
       if (args.length > 1) {
-        output = printf(...args)
+        output = `${printf(...args)}`
       } else {
-        output = args[0].toString()
+        output = `${args[0]}`
       }
       dispatchPrint(output)
     } catch (e) {
@@ -1039,7 +1040,7 @@ const printHeap = () => {
   const nodes = []
   for (let frame of ENVIRONMENT) {
     const pointers = Object.values(frame).filter((v) =>
-      v.typeSpecifier.includes('*')
+      isPointerType(v.typeSpecifier)
     )
 
     for (const p of pointers) {
