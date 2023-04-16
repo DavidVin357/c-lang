@@ -1,3 +1,5 @@
+import { BinaryOperator, AssignmentOperator } from '../cTree'
+
 export function evaluateBinaryExpression(
   left: any,
   right: any,
@@ -14,18 +16,8 @@ export function evaluateBinaryExpression(
       return left / right
     case '%':
       return left % right
-    case '==': {
-      const leftValue = typeof left === 'object' ? JSON.stringify(left) : left
-      const rightValue =
-        typeof left === 'object' ? JSON.stringify(right) : right
-      return leftValue === rightValue ? 1 : 0
-    }
-    case '!=': {
-      const leftValue = typeof left === 'object' ? JSON.stringify(left) : left
-      const rightValue =
-        typeof left === 'object' ? JSON.stringify(right) : right
-      return leftValue !== rightValue ? 1 : 0
-    }
+    case '==':
+      return left === right ? 1 : 0
     case '<=':
       return left <= right ? 1 : 0
     case '<':
@@ -66,24 +58,12 @@ export function evaluateAssignmentExpression(
   }
 }
 
-export function evaluateUnaryExpression(
-  right: any,
-  operator: string,
-  isPointer?: boolean,
-  size?: number
-) {
-  const increment = isPointer && size ? size : 1
+export function evaluateUnaryExpression(right: any, operator: string) {
   switch (operator) {
     case '++':
-      right += increment
-      return right
+      return ++right
     case '--':
-      right -= increment
-      return right
-    case '!':
-      return !right ? 1 : 0
-    case '-':
-      return -right
+      return --right
     default:
       return undefined
   }

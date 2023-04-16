@@ -9,7 +9,6 @@
   ],
   "dependencies": {
     "antlr4ts": "^0.5.0-alpha.4",
-    "printf": "^0.6.1",
     "table": "^6.8.1",
     "typescript": "^5.0.2"
   },
@@ -21,7 +20,6 @@
   "scripts": {
     "antlr4ts": "antlr4ts -visitor src/lang/C.g4",
     "build": "yarn tsc --build --force",
-    "dev": "node --loader ts-node/esm ./src/index.ts",
-    "test": "node --loader ts-node/esm ./tests/test.ts"
+    "dev": "node --loader ts-node/esm ./src/index.ts"
   }
 }

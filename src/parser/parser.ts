@@ -50,11 +50,6 @@ import {
   PrintStackContext,
   InitializationListContext,
   SequenceStatementContext,
-  PrintfContext,
-  LoopInitialContext,
-  UnaryContext,
-  BreakStatementContext,
-  AssignmentListContext,
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 
@@ -65,7 +60,6 @@ import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { CharStreams, CommonTokenStream } from 'antlr4ts'
 import { getTypeSize } from '../interpreter/helpers'
-import { checkOperator } from '../errors/errors'
 
 class ExpressionGenerator implements CVisitor<cTree.Expression> {
   typeGenerator = new TypeGenerator()
@@ -132,13 +126,6 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitAssignmentList(ctx: AssignmentListContext): cTree.AsignmentList {
-    return {
-      type: 'AssignmentList',
-      assignments: ctx.assignment().map((a) => this.visit(a)),
-    }
-  }
-
   visitFunctionApplication(
     ctx: FunctionApplicationContext
   ): cTree.FunctionApplication {
@@ -159,7 +146,6 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       type: 'Array',
       value: ctx.expression().map((e) => this.visit(e)),
       length: ctx.expression().length,
-      typeSpecifier: '[]',
     }
   }
 
@@ -194,34 +180,24 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
 
   visitString(ctx: StringContext): cTree.cArray {
     const str = ctx.STRING().text
-    const charArr: cTree.Literal[] = str
-      .replaceAll('"', '')
-      .split('')
-      .map((c) => ({
-        type: 'Literal',
-        value: c.charCodeAt(0),
-        typeSpecifier: 'char',
-        raw: c,
-      }))
-
-    charArr.push({
-      type: 'Literal',
-      value: 48,
-      typeSpecifier: 'char',
-      raw: '\0',
-    })
-
     return {
       type: 'Array',
-      value: charArr,
+      value: str
+        .replaceAll('"', '')
+        .split('')
+        .map((c) => ({
+          type: 'Literal',
+          value: c.charCodeAt(0),
+          typeSpecifier: 'char',
+          raw: c,
+        })),
       typeSpecifier: 'char[]',
       length: str.length,
     }
   }
 
   // Binary operations
-  visitAdditive(ctx: AdditiveContext): cTree.BinaryExpression {
-    if (!ctx._operator.text) throw Error("Operator doesn't not exist")
+  visitAdditive(ctx: AdditiveContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
       operator: ctx._operator.text,
@@ -231,8 +207,6 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
   }
 
   visitMultiplicative(ctx: MultiplicativeContext): cTree.Expression {
-    if (!ctx._operator.text) throw Error("Operator doesn't not exist")
-
     return {
       type: 'BinaryExpression',
       operator: ctx._operator.text,
@@ -240,9 +214,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
       right: this.visit(ctx._right),
     }
   }
-  visitEquality(ctx: EqualityContext): cTree.BinaryExpression {
-    if (!ctx._operator.text) throw Error("Operator doesn't not exist")
-
+  visitEquality(ctx: EqualityContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
       operator: ctx._operator.text,
@@ -251,9 +223,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitRelational(ctx: RelationalContext): cTree.BinaryExpression {
-    if (!ctx._operator.text) throw Error("Operator doesn't not exist")
-
+  visitRelational(ctx: RelationalContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
       operator: ctx._operator.text,
@@ -269,7 +239,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitLogicalAnd(ctx: LogicalAndContext): cTree.BinaryExpression {
+  visitLogicalAnd(ctx: LogicalAndContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
       operator: '&&',
@@ -278,7 +248,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitLogicalOr(ctx: LogicalOrContext): cTree.BinaryExpression {
+  visitLogicalOr(ctx: LogicalOrContext): cTree.Expression {
     return {
       type: 'BinaryExpression',
       operator: '||',
@@ -287,28 +257,11 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  visitUnary(ctx: UnaryContext): cTree.UnaryExpression {
-    if (!ctx._operator.text) throw Error("Operator doesn't not exist")
-
-    return {
-      type: 'UnaryExpression',
-      operator: ctx._operator.text,
-      right: this.visit(ctx._right),
-    }
-  }
-
   // Memory management
   visitVarAddress(ctx: VarAddressContext): cTree.VariableAddress {
-    const index = ctx.variableAccess()._index
     return {
       type: 'VariableAddress',
-      name: ctx.variableAccess().Identifier().text,
-      index: index
-        ? this.visit(index)
-        : {
-            type: 'Literal',
-            value: 0,
-          },
+      name: ctx.Identifier().text,
     }
   }
   visitPointer(ctx: PointerContext): cTree.PointerExpression {
@@ -454,7 +407,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       },
       typeQualifiers: this.typeGenerator.visitChildren(ctx._qualifiers),
       identifier: ctx.Identifier().text,
-      size: this.expressionGenerator.visit(ctx._size),
+      size: parseInt(ctx.DECIMAL().text),
     }
   }
 
@@ -545,12 +498,9 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   visitParameterDeclaration(
     ctx: ParameterDeclarationContext
   ): cTree.ParameterDeclaration {
-    const isArray = ctx.text.includes('[]')
-    const type = this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier())
-    if (isArray) type.value += '[]'
     return {
       type: 'ParameterDeclaration',
-      typeSpecifier: type,
+      typeSpecifier: this.typeGenerator.visitTypeSpecifier(ctx.typeSpecifier()),
       identifier: ctx.Identifier().text,
     }
   }
@@ -589,7 +539,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
   visitSwitchStatement(ctx: SwitchStatementContext): cTree.SwitchStatement {
     return {
       type: 'SwitchStatement',
-      condition: this.expressionGenerator.visit(ctx._condition),
+      condition: new ExpressionGenerator().visit(ctx._condition),
       body: this.visitSwitchBodyStatement(ctx._body),
     }
   }
@@ -647,30 +597,14 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       value: this.expressionGenerator.visit(ctx._value),
     }
   }
-  visitPrintf(ctx: PrintfContext): cTree.Printf {
-    const expressions = ctx
-      .expression()
-      .map((e) => this.expressionGenerator.visit(e))
-    return {
-      type: 'Printf',
-      args: ctx.expression().map((e) => this.expressionGenerator.visit(e)),
-    }
-  }
+
   // Loops
-  visitBreakStatement(ctx: BreakStatementContext): cTree.BreakStatement {
-    return {
-      type: 'BreakStatement',
-    }
-  }
-  visitLoopInitial(ctx: LoopInitialContext): cTree.Statement {
-    return this.visitChildren(ctx)
-  }
   visitForLoop(ctx: ForLoopContext): cTree.ForLoop {
     return {
       type: 'ForLoop',
-      initial: this.visit(ctx._initial),
+      initial: this.visitInitialization(ctx._initial),
       condition: this.expressionGenerator.visit(ctx._condition),
-      action: this.expressionGenerator.visit(ctx._action),
+      action: this.visit(ctx._action),
       body: this.visit(ctx._body),
     }
   }

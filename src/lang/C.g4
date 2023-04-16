@@ -113,9 +113,6 @@ prefixAssignment
 assignment:
     binaryAssignment | prefixAssignment | postfixAssignment;
     
-assignmentList
-    : assignment (',' assignment)*
-    ; 
 // e.g., *h = 43
 pointerValueAssignment
     : pointer operator=binaryAssignmentOperator value=expression
@@ -127,10 +124,10 @@ array
     ;
 
 arrayInitialization:
-    qualifiers=typeQualifiers typeSpecifier Identifier ('[' expression ']' | '[]') '=' value=expression ';';
+    qualifiers=typeQualifiers typeSpecifier Identifier '['size=DECIMAL?']' '=' value=expression ';';
 
 arrayDeclaration:
-    qualifiers=typeQualifiers typeSpecifier Identifier '['size=expression']' ';';
+    qualifiers = typeQualifiers typeSpecifier Identifier '['size=DECIMAL']' ';';
 
 arrayAccess:
     name=Identifier '[' index=expression ']';
@@ -156,10 +153,6 @@ printHeap: 'print_heap' '(' ')' ';';
 printStack: 'print_stack' '(' ')' ';';
 
 print: 'print' '(' value=expression ')' ';';
-printf: 'printf' '(' expression (',' expression)*')' ';';
-
-variableAccess
-    : Identifier ('[' index=expression ']')?;   
 
 expression
    : DECIMAL                                                    # Decimal
@@ -170,9 +163,8 @@ expression
    | functionApplication                                        # Application
    | '(' inner=expression ')'                                   # Parentheses
    | arrayAccess                                                # Access
-   | operator=VAR_ADDRESS right=variableAccess                  # VarAddress
+   | operator=VAR_ADDRESS right=Identifier                      # VarAddress
    | sizeof                                                     # SizeOfOperator
-   | operator=(NOT | SUB) right=expression                      # Unary
    | left=expression operator=(ADD | SUB) right=expression      # Additive
    | left=expression operator=(MUL | DIV | MOD ) right=expression  # Multiplicative
    | left=expression operator=(GREATER | GREATER_EQUAL | LESS | LESS_EQUAL) right=expression # Relational
@@ -180,7 +172,7 @@ expression
    | left=expression operator=LOGICAL_AND right=expression      # LogicalAnd
    | left=expression operator=LOGICAL_OR right=expression       # LogicalOr
    | pointer                                                    # PointerExpression 
-   | assignmentList                                                 # AssignmentExpression
+   | assignment                                                 # AssignmentExpression
    | arrayValueAssignment                                       # ArrayValueAssignmentExpression
    | pointerValueAssignment                                     # PointerValueAssignmentExpression
    | malloc                                                     # MallocExpression
@@ -201,8 +193,8 @@ switchStatement
     ;
 
 labeledStatement
-    :   'case' condition=expression ':' body=statement breakStatement?
-    |   'default' ':' body=statement breakStatement?
+    :   'case' condition=expression ':' body=sequenceStatement breakStatement?
+    |   'default' ':' body=sequenceStatement breakStatement?
     ;
 
 breakStatement
@@ -228,13 +220,8 @@ switchBodyStatement
 returnStatement
     : 'return' expression ';';
 
-loopInitial
-    :
-    initializationList | expressionStatement
-    ;
-
 forLoop
-    :   'for' '(' initial=loopInitial condition=expression ';' action=expression ')' body=compoundStatement
+    :   'for' '(' initial=initialization condition=expression ';' action=statement ')' body=compoundStatement
     ;
 doWhileLoop
     :   'do' body=compoundStatement 'while' '(' condition=expression ')'
@@ -245,7 +232,6 @@ whileLoop
     
 statement
     :   expressionStatement
-    |   arrayInitialization
     |   initialization
     |   initializationList
     |   conditionalStatement
@@ -255,7 +241,7 @@ statement
     |   switchBodyStatement
     |   functionDeclaration
     |   returnStatement
-    |   breakStatement
+    |   arrayInitialization
     |   arrayDeclaration
     |   forLoop
     |   doWhileLoop
@@ -263,11 +249,10 @@ statement
     |   printHeap
     |   printStack
     |   print
-    |   printf
     ;
 
 parameterDeclaration
-    :   typeSpecifier Identifier '[]'?
+    :   typeSpecifier Identifier
     ;
 
 parameterList

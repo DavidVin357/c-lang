@@ -13,11 +13,7 @@ import {
   dispatchWarning,
   dispathchTable,
   getLiteralSize,
-  isPointerType,
-  getPointerValueType,
 } from './helpers'
-
-const printf = require('printf')
 
 // Code segment (stores function instructions)
 const CODE: { [identifier: string]: cTree.FunctionStorage } = {}
@@ -134,13 +130,12 @@ const memoryAllocateBasic = (
 }
 
 const memoryRetrieveBasic = (index: number, type: string): any => {
-  if (type.includes('*')) {
+  if (type.includes('*') || type.includes('[]')) {
     return MEMORY.getFloat64(index)
   }
   switch (type) {
-    case 'char':
-    case 'signed char':
-      return MEMORY.getInt8(index)
+    case 'char' || 'signed char':
+      return String.fromCharCode(MEMORY.getInt8(index))
 
     case 'unsigned char':
       return MEMORY.getInt8(index)
@@ -241,19 +236,15 @@ const freeMemory = (address: number, size: number) => {
       heapFreeNode.end,
       heapFreeNode.next
     )
-    heapFreeNode = memoryNode
-  }
-
-  if (heapFreeNode.end === address) {
+  } else if (heapFreeNode.end === address) {
     memoryNode = new HeapMemoryNode(
       heapFreeNode.start,
       address + size,
       heapFreeNode.next
     )
-    heapFreeNode = memoryNode
-    return
+  } else {
+    memoryNode = new HeapMemoryNode(address, address + size, heapFreeNode)
   }
-  memoryNode = new HeapMemoryNode(address, address + size, heapFreeNode)
   heapFreeNode = memoryNode
 }
 
@@ -272,46 +263,18 @@ type Evaluator<T extends cTree.Node> = (node: T) => any
 const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   Literal: function (node: cTree.Literal): EvaluationResult {
     return {
-      value: node.value,
+      value:
+        node.typeSpecifier === 'char' && typeof node.value == 'number'
+          ? String.fromCharCode(node.value)
+          : node.value,
       typeSpecifier: null,
     }
   },
   BinaryExpression: function (node: cTree.BinaryExpression): EvaluationResult {
-    const { typeSpecifier: leftType, value: leftValue } = evaluate(node.left)
-    const { typeSpecifier: rightType, value: rightValue } = evaluate(node.right)
-
-    if (isPointerType(leftType) && !isPointerType(rightType)) {
-      const typeSize = getTypeSize(getPointerValueType(leftType))
-      return {
-        value: evaluateBinaryExpression(
-          leftValue,
-          rightValue * typeSize,
-          node.operator
-        ),
-        typeSpecifier: leftType,
-      }
-    }
-
-    if (isPointerType(rightType) && !isPointerType(leftType)) {
-      const typeSize = getTypeSize(getPointerValueType(rightType))
-      return {
-        value: evaluateBinaryExpression(
-          leftValue * typeSize,
-          rightValue,
-          node.operator
-        ),
-        typeSpecifier: rightType,
-      }
-    }
-    return {
-      value: evaluateBinaryExpression(leftValue, rightValue, node.operator),
-      typeSpecifier: null,
-    }
-  },
-  UnaryExpression: function (node: cTree.UnaryExpression): EvaluationResult {
+    const left = actualValue(node.left)
     const right = actualValue(node.right)
     return {
-      value: evaluateUnaryExpression(right, node.operator),
+      value: evaluateBinaryExpression(left, right, node.operator || ''),
       typeSpecifier: null,
     }
   },
@@ -319,7 +282,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   Array: function (node: cTree.cArray) {
     const value = node.value.map((e) => evaluate(e))
     return {
-      typeSpecifier: node.typeSpecifier,
+      typeSpecifier: node.typeSpecifier || 'Array',
       value,
       length: node.value.length,
     }
@@ -339,12 +302,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const address = getEnvironmentValue(name).address
 
     const typeSpecifier = getEnvironmentValue(name).typeSpecifier
-
     const size = getEnvironmentValue(name).size
     return {
-      value: typeSpecifier.includes('[]')
-        ? address
-        : memoryRetrieveBasic(address, typeSpecifier),
+      value: memoryRetrieveBasic(address, typeSpecifier),
       typeSpecifier,
       size,
     }
@@ -368,6 +328,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
           value: 0,
           length: 0,
         }
+
     if (arrLength) {
       size = arrLength * getTypeSize(leftType.replace('[]', ''))
     }
@@ -382,16 +343,16 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       !rightType?.includes('void') &&
       rightType !== leftType
     ) {
-      // dispatchWarning(
-      //   `initialization of ${leftType} from incompatible pointer type ${rightType}`
-      // )
+      dispatchWarning(
+        `initialization of ${leftType} from incompatible pointer type ${rightType}`
+      )
     }
 
     const typeQualifiers = node.typeQualifiers.value.map(
       (t: cTree.TypeQualifier) => t.value
     )
-
     const address = pushOnStack(value, leftType)
+
     extendEnvironment(name, address, leftType, typeQualifiers, size)
   },
 
@@ -418,10 +379,10 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     const leftValue = memoryRetrieveBasic(leftAddress, leftType)
+
     if (
       (rightType?.includes('*') || leftType.includes('*')) &&
       !rightType?.includes('void') &&
-      !rightType?.includes('[]') &&
       rightType !== leftType
     ) {
       dispatchWarning(
@@ -440,6 +401,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     if (size) {
       ENVIRONMENT[lastIndex][name].size = size
     }
+
     memoryAllocateBasic(value, leftType, leftAddress)
   },
 
@@ -450,18 +412,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const { address: leftAddress, typeSpecifier: leftType } =
       getEnvironmentValue(name)
 
-    const isPointer = isPointerType(leftType)
-    const typeSize = isPointer ? getTypeSize(getPointerValueType(leftType)) : 1
-
     const leftValue = memoryRetrieveBasic(leftAddress, leftType)
 
-    let newValue
-    newValue = evaluateUnaryExpression(
-      leftValue,
-      node.operator,
-      isPointer,
-      typeSize
-    )
+    const newValue = evaluateUnaryExpression(leftValue, node.operator)
 
     memoryAllocateBasic(newValue, leftType, leftAddress)
 
@@ -469,10 +422,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       value: leftValue,
       leftType,
     }
-  },
-
-  AssignmentList: function (node: cTree.AsignmentList) {
-    node.assignments.map((i) => evaluate(i))
   },
 
   // ++v or --v
@@ -507,7 +456,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     if (
       (leftType?.includes('*') || rightType?.includes('*')) &&
       !rightType?.includes('void') &&
-      !rightType?.includes('[]') &&
       leftType !== rightType
     ) {
       dispatchWarning(
@@ -516,7 +464,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     const value = evaluateAssignmentExpression(
-      node.operator,
+      node.operator || '',
       leftValue,
       rightValue
     )
@@ -533,7 +481,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       : address
 
     const { typeSpecifier: leftType, value: leftValue } = evaluate(node.left)
-    const accessIndex = actualValue(node.index)
+    const accessIndex = evaluate(node.index)
     const addr = arrStart + accessIndex * getTypeSize(leftType)
     let { typeSpecifier: rightType, value: rightValue } = evaluate(node.value)
 
@@ -552,7 +500,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     }
 
     const value = evaluateAssignmentExpression(
-      node.operator,
+      node.operator || '',
       leftValue,
       rightValue
     )
@@ -565,12 +513,6 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     return {
       value: result,
       type: 'return',
-    }
-  },
-
-  BreakStatement(node: cTree.BreakStatement) {
-    return {
-      type: 'break',
     }
   },
   FunctionApplication(node: cTree.FunctionApplication): EvaluationResult {
@@ -587,17 +529,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     formals.forEach((formal, index) => {
       const name = formal.name
       const typeSpecifier = formal.typeSpecifier
-      let { value, size } = evaluate(args[index])
-      if (typeSpecifier.includes('[]')) {
-        let array = []
-        const type = typeSpecifier.replace('[]', '')
-        for (let i = value; i < value + size; i += getTypeSize(type)) {
-          array.push({ value: memoryRetrieveBasic(i, type) })
-        }
-        value = array
-      }
+      const value = actualValue(args[index])
       const address = pushOnStack(value, typeSpecifier)
-      extendEnvironment(name, address, typeSpecifier, [], size)
+      extendEnvironment(name, address, typeSpecifier, [])
     })
 
     // Execute body
@@ -686,6 +620,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const typeSize = getTypeSize(type)
 
     const accessIndex = actualValue(node.index)
+
     const idx = arrStart + accessIndex * typeSize
 
     // retrieve memory using the memoryRetrieveBasic
@@ -699,11 +634,8 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   // &v
   VariableAddress: function (node: cTree.VariableAddress): EvaluationResult {
     const name = node.name
-    const index = actualValue(node.index)
+    const address = getEnvironmentValue(name).address
     const typeSpecifier = getEnvironmentValue(name).typeSpecifier
-    const address =
-      getEnvironmentValue(name).address + index * getTypeSize(typeSpecifier)
-
     return { value: address, typeSpecifier: typeSpecifier + '*' }
   },
 
@@ -750,7 +682,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       }
     }
 
-    const { value, typeSpecifier, size } = evaluate(node.arg)
+    const { value, typeSpecifier, size } = actualValue(node.arg)
 
     if (size) {
       return {
@@ -775,54 +707,22 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
   },
 
   PrintStack: function (node: cTree.PrintMemory) {
-    // printStack()
+    printStack()
   },
 
   Print: function (node: cTree.Print) {
     let output
-    const val = evaluate(node.value)
-    if (val.typeSpecifier?.includes('[]') || val.typeSpecifier === 'char*') {
-      output = evaluateArray({
-        value: val.value,
-        size: val.size,
-        typeSpecifier: val.typeSpecifier.replace('[]', '').replace('*', ''),
-      })
+    if (node.value.type === 'Array') {
+      const array = node.value
+
+      const values = array.value.map((v) => actualValue(v))
+
+      output = array.typeSpecifier === 'char[]' ? values.join('') : values
     } else {
-      output = val.value
+      output = actualValue(node.value)
     }
-    // if (node.value.type === 'Array') {
-    //   output = evaluateArray(node.value)
-    // } else {
-    //   output = actualValue(node.value)
-    // }
 
     console.log(output)
-  },
-
-  Printf: function (node: cTree.Printf) {
-    const args = node.args.map((a) => {
-      const isArray = a.type === 'Array'
-      if (isArray) {
-        const value = actualValue(a)
-        const typeSpecifier = a.typeSpecifier
-        const size = a.length * getTypeSize(typeSpecifier)
-        const result = evaluateArray({ value, size, typeSpecifier })
-        return result
-      }
-      const result = evaluate(a)
-      return result.typeSpecifier === 'char'
-        ? String.fromCharCode(result.value)
-        : result.value
-    })
-    try {
-      if (args.length > 1) {
-        console.log(printf(...args))
-      } else {
-        console.log(args[0])
-      }
-    } catch (e) {
-      throw new Error('Invalid printf argument')
-    }
   },
 
   // STATEMENTS
@@ -856,10 +756,9 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     let condition = evaluate(node.condition)
     while (condition.value) {
       const result = evaluate(node.body)
-      if (result?.type === 'return' || result?.type === 'break') {
+      if (result?.type === 'return') {
         return result
       }
-
       evaluate(node.action)
       condition = evaluate(node.condition)
     }
@@ -869,7 +768,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     let condition = evaluate(node.condition)
     while (condition.value) {
       const result = evaluate(node.body)
-      if (result?.type === 'return' || result?.type === 'break') {
+      if (result?.type === 'return') {
         return result
       }
       condition = evaluate(node.condition)
@@ -880,22 +779,22 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     let condition = evaluate(node.condition)
     evaluate(node.body)
     while (condition.value) {
-      const result = evaluate(node.body)
-      if (result?.type === 'return' || result?.type === 'break') {
-        return result
-      }
+      evaluate(node.body)
       condition = evaluate(node.condition)
     }
   },
 
   SequenceStatement: function (node: cTree.SequenceStatement) {
     let result
+    const free = stackFree
+    ENVIRONMENT.push({})
     for (const instr of node.statements) {
       result = evaluate(instr)
-      if (result?.type === 'return' || result?.type === 'break') {
+      if (result?.type === 'return') {
         return result
       }
     }
+    ENVIRONMENT.pop()
     return result
   },
 
@@ -919,7 +818,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
     const name = node.identifier
     const type = node.typeSpecifier.value
     let value = []
-    const size = actualValue(node.size) * getTypeSize(type.replace('[]', ''))
+    const size = node.size
     for (let i = 0; i < size; i++) {
       value.push(0)
     }
@@ -927,7 +826,7 @@ const evaluators: { [nodeType: string]: Evaluator<cTree.Node> } = {
       (t: cTree.TypeQualifier) => t.value
     )
     const address = pushOnStack(value, type)
-    extendEnvironment(name, address, type, typeQualifiers, size)
+    extendEnvironment(name, address, type, typeQualifiers)
   },
 
   // int func() {...};
@@ -1041,82 +940,49 @@ const printHeap = () => {
   )
 }
 
-// export function printStack() {
-//   const columnNames = [['ADDRESS', 'NAME', 'TYPE', 'VALUE']]
-//   const nodes = []
+export function printStack() {
+  const columnNames = [['ADDRESS', 'NAME', 'TYPE', 'VALUE']]
+  const nodes = []
 
-//   for (let frame of ENVIRONMENT) {
-//     const identifiers = Object.entries(frame)
-//     for (let [identifier, variable] of identifiers) {
-//       const address = variable.address
+  for (let frame of ENVIRONMENT) {
+    const identifiers = Object.entries(frame)
+    for (let [identifier, variable] of identifiers) {
+      const address = variable.address
 
-//       if (!isInStack(address)) continue
+      if (!isInStack(address)) continue
 
-//       const typeSpecifier = variable.typeSpecifier
+      const typeSpecifier = variable.typeSpecifier
 
-//       if (typeSpecifier.includes('[]')) {
-//         const elementType = typeSpecifier.replace('[]', '')
-//         const value =
-//           '[' +
-//           evaluateArray({
-//             value: variable.address,
-//             size: variable.size || 0,
-//             typeSpecifier: variable.typeSpecifier,
-//           }) +
-//           ']'
-//         const stackNode = [address, identifier, typeSpecifier, value]
+      if (typeSpecifier.includes('[]')) {
+        const elementType = typeSpecifier.replace('[]', '')
+        const value =
+          '[' +
+          evaluateArray(address, address + (variable.size || 0), elementType) +
+          ']'
+        const stackNode = [address, identifier, typeSpecifier, value]
 
-//         nodes.push(stackNode)
-//       } else {
-//         const value = memoryRetrieveBasic(address, typeSpecifier)
-//         const stackNode = [address, identifier, typeSpecifier, value]
-//         nodes.push(stackNode)
-//       }
-//     }
-//   }
-
-//   dispathchTable(table(columnNames.concat(nodes.sort((a, b) => a[0] - b[0]))))
-// }
-
-export function evaluateArray({
-  value,
-  size,
-  typeSpecifier,
-}: {
-  value: any
-  size: number
-  typeSpecifier?: string
-}) {
-  if (!typeSpecifier) {
-    throw Error("Can't find a type for arrays")
-  }
-  let type = typeSpecifier.replace('[]', '')
-  if (typeSpecifier.includes('*')) {
-    type = typeSpecifier.slice(0, -1)
-  }
-  let result = []
-  let address
-  // Array is given as address
-  if (typeof value === 'number') {
-    address = value
-    for (let i = address; i < address + size; i += getTypeSize(type)) {
-      if (type === 'char') {
-        result.push(String.fromCharCode(memoryRetrieveBasic(i, type)))
+        nodes.push(stackNode)
       } else {
-        result.push(memoryRetrieveBasic(i, type))
+        const value = memoryRetrieveBasic(address, typeSpecifier)
+        const stackNode = [address, identifier, typeSpecifier, value]
+        nodes.push(stackNode)
       }
     }
-    return type === 'char' ? result.slice(0, -1).join('') : result
   }
 
-  // Array Literal
-  if (type === 'char') {
-    result = value.map((v: any) => String.fromCharCode(v.value))
-  } else {
-    result = value.map((v: any) => v.value)
-  }
+  dispathchTable(table(columnNames.concat(nodes.sort((a, b) => a[0] - b[0]))))
+}
 
-  return type === 'char' ? result.slice(0, -1).join('') : result
+export function evaluateArray(
+  startAddress: number,
+  endAddress: number,
+  typeSpecifier: string
+) {
+  const result = []
+  for (let i = startAddress; i < endAddress; i += getTypeSize(typeSpecifier)) {
+    result.push(memoryRetrieveBasic(i, typeSpecifier))
+  }
+  return result
 }
 
 export function evaluate(node: cTree.Node) {

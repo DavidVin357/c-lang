@@ -24,7 +24,6 @@ export type PointerExpression = {
 export type VariableAddress = {
   type: 'VariableAddress'
   name: string
-  index: Expression
 }
 
 export type AssignmentOperator =
@@ -74,16 +73,11 @@ export type UnaryAssignment = {
   identifier: string
 }
 
-export type AsignmentList = {
-  type: 'AssignmentList'
-  assignments: Expression[]
-}
-
 export type ArrayValueAssignment = {
   type: 'ArrayValueAssignment'
   left: arrayAccess
   index: Expression
-  operator: string
+  operator?: string
   castingType: TypeSpecifier | null
   identifier: string
   value: Expression
@@ -91,21 +85,15 @@ export type ArrayValueAssignment = {
 
 export type PointerValueAssignment = {
   type: 'PointerValueAssignment'
-  operator: string
+  operator?: string
   pointer: PointerExpression
   value: Expression
 }
 
 export type BinaryExpression = {
   type: 'BinaryExpression'
-  operator: string
+  operator?: string
   left: Expression
-  right: Expression
-}
-
-export type UnaryExpression = {
-  type: 'UnaryExpression'
-  operator: string
   right: Expression
 }
 
@@ -154,11 +142,6 @@ export type Print = {
   value: Expression
 }
 
-export type Printf = {
-  type: 'Printf'
-  args: Expression[]
-}
-
 export type cArray = {
   type: 'Array'
   value: Expression[]
@@ -178,9 +161,7 @@ export interface ExpressionMap {
   VariableAddress: VariableAddress
   BinaryAssignment: BinaryAssignment
   UnaryAssignment: UnaryAssignment
-  AsignmentList: AsignmentList
   BinaryExpression: BinaryExpression
-  UnaryExpression: UnaryExpression
   PostfixExpression: PostfixExpression
   PrefixExpression: PrefixExpression
   ParenthesesExpression: ParenthesesExpression
@@ -281,14 +262,14 @@ export type ArrayDeclaration = {
   typeSpecifier: TypeSpecifier
   typeQualifiers: SequenceType
   identifier: string
-  size: Expression
+  size: number
 }
 
 export type ForLoop = {
   type: 'ForLoop'
-  initial: Statement
+  initial: VariableInitialization
   condition: Expression
-  action: Expression
+  action: Statement
   body: Statement
 }
 
@@ -316,12 +297,10 @@ export interface StatementMap {
   LabeledStatement: LabeledStatement
   ParameterDeclaration: ParameterDeclaration
   ReturnStatement: ReturnStatement
-  BreakStatement: BreakStatement
   FunctionDeclaration: FunctionDeclaration
   ArrayDeclaration: ArrayDeclaration
   PrintMemory: PrintMemory
   Print: Print
-  Printf: Printf
   ForLoop: ForLoop
   DoWhileLoop: DoWhileLoop
   WhileLoop: WhileLoop
@@ -347,9 +326,6 @@ export type FunctionStorage = {
 export type ReturnStatement = {
   type: 'ReturnStatement'
   value: Expression
-}
-export type BreakStatement = {
-  type: 'BreakStatement'
 }
 
 export type FunctionApplication = {
