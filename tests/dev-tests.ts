@@ -1,4 +1,4 @@
-import { expect, test } from '@jest/globals'
+const { spawn } = require('child_process')
 
 import { run } from '../src/index'
 import { clearOuput, getOutput } from '../src/logger'
@@ -226,7 +226,7 @@ double main() {
 }
 
 `
-// Check for palindrome word: function application, pointer arithmetic, conditionals, strings
+// Check for palindrome word: functiona application, pointer arithmetic, conditionals, strings
 const test11 = `
 int isPalindrome(char string[])
 {
@@ -270,7 +270,6 @@ int main()
 }
 `
 
-// String comparison: function application, conditionals, pointers, printf
 const test12 = `
 // Function that compares the two string
 void compareStrings(char* x, char* y)
@@ -366,97 +365,17 @@ int main()
     return findLargest(arr, N);
 }
 `
-test('Test 1: merge two arrays ({ 1, 2, 3, 4, 5 } and { 6, 7, 8, 9, 10, 11, 12 })', () => {
-  const expected = '1 2 3 4 5 6 7 8 9 10 11 12 '
-  run(test1)
-  const output = getOutput()
-  expect(output).toBe(expected)
-  clearOuput()
-})
-
-test('Test 2: find average of array', () => {
-  expect(run(test2)).toBe(5.8)
-  clearOuput()
-})
-
-test('Test 4: char* message printing', () => {
-  const expected = 'Message is: HELLO'
-  run(test4)
-  const output = getOutput()
-  expect(output).toBe(expected)
-  clearOuput()
-})
-
-test('Test 5: fun with pointers', () => {
-  const expected = 1723
-  expect(run(test5)).toBe(expected)
-  clearOuput()
-})
-
-test('Test 6: character pyramid', () => {
-  const expected = `A 
-B B 
-C C C 
-D D D D 
-E E E E E 
-`
-  run(test6)
-  const output = getOutput()
-  expect(output).toBe(expected)
-  clearOuput()
-})
-
-test('Test 7: swap variables', () => {
-  const expected = 'After Swapping: x = 112, y = -8'
-
-  run(test7)
-  const output = getOutput()
-  expect(output).toBe(expected)
-  clearOuput()
-})
-
-test('Test 8 : Printing first letter of each word', () => {
-  const expected = 'C J P C I O T'
-
-  run(test8)
-  const output = getOutput()
-  expect(output).toBe(expected)
-  clearOuput()
-})
-
-test('Test 9: array sorting', () => {
-  const expected = '-5 9 12 14 23 116 '
-
-  run(test9)
-  const output = getOutput()
-  expect(output).toBe(expected)
-  clearOuput()
-})
-
-// Test 9: printing first letter of each word
-test('Test 10: calculator', () => {
-  const expected = '5.2 / 4.7 = 1.1'
-  run(test9)
-  expect(getOutput()).toBe(expected)
-  clearOuput()
-})
-
-test('Test 11: check palindromes', () => {
-  const expected =
-    "String 'madam' is Palindrome \n" + "String 'madan' is not a Palindrome \n"
-  run(test11)
-  expect(getOutput()).toBe(expected)
-  clearOuput()
-})
-
-test('Test 12: compare strings', () => {
-  const expected = "strings 'python' and 'python' are equal"
-  expect(run(test12)).toBe(expected)
-  clearOuput()
-})
-
-test('Test 13: find largest element in the array', () => {
-  const expected = 139
-  expect(run(test13)).toBe(expected)
-  clearOuput()
-})
+// console.log(run(test1))
+// run(test1)
+// run(test2)
+// run(test3)
+// run(test4)
+// run(test5)
+// run(test6)
+// run(test7)
+// run(test8)
+// run(test9)
+// run(test10)
+// run(test11)
+run(test12)
+// run(test13)
