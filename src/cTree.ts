@@ -15,6 +15,7 @@ export type Pointer = {
   name: string
 }
 
+// *a or *(a + 2)
 export type PointerExpression = {
   type: 'PointerExpression'
   name?: string
@@ -22,6 +23,7 @@ export type PointerExpression = {
   multiplicity: number
 }
 
+// &a
 export type VariableAddress = {
   type: 'VariableAddress'
   name: string
@@ -61,6 +63,7 @@ export type BinaryOperator =
   | '&'
   | '&&'
 
+// a = b;
 export type BinaryAssignment = {
   type: 'BinaryAssignment'
   operator: string
@@ -69,12 +72,14 @@ export type BinaryAssignment = {
   value: Expression
 }
 
+// a++, --a ...
 export type UnaryAssignment = {
   type: 'PostfixAssignment' | 'PrefixAssignment'
   operator: string
   identifier: string
 }
 
+// a = 4, b = 5 ...
 export type AsignmentList = {
   type: 'AssignmentList'
   assignments: Expression[]
@@ -199,6 +204,7 @@ export interface ExpressionMap {
 
 export type Expression = ExpressionMap[keyof ExpressionMap]
 
+// Types
 export type TypeQualifier = {
   type: 'typeQualifier'
   value: string

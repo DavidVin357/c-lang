@@ -1,9 +1,16 @@
+import { logPrintf } from '../logger'
+
+const getRandom = (min: number, max: number): number => {
+  return Math.random() * (max - min) + min
+}
+
+// Types
 const INT_MAX = 2147483647
 const INT_MIN = -2147483648
-const LONG_MAX = 9223372036854775807n
-const LONG_MIN = -9223372036854775808n
+const LONG_MAX = BigInt(9223372036854775807)
+const LONG_MIN = BigInt(-9223372036854775808)
 
-const ULONG_MAX = 18446744073709551615n
+const ULONG_MAX = BigInt(18446744073709551615)
 
 function isInt(val: number): boolean {
   return (
@@ -82,8 +89,17 @@ const isPointerType = (typeSpecifier: any) => {
   }
   return false
 }
+const isArrayType = (typeSpecifier: any) => {
+  if (typeof typeSpecifier === 'string' && typeSpecifier.includes('[]')) {
+    return true
+  }
+  return false
+}
 const getPointerValueType = (type: string) => type.slice(0, type.length - 1)
 
+const getArrayValueType = (type: string) => type.replace('[]', '')
+
+// I/O
 const dispatchWarning = (message: string) => {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
@@ -113,11 +129,28 @@ const dispathchTable = (table: any) => {
   }
 }
 
+const dispatchPrint = (output: string) => {
+  if (typeof window !== 'undefined') {
+    new CustomEvent('printf', {
+      detail: {
+        message: output,
+      },
+    })
+  } else {
+    process.stdout.write(output)
+  }
+  logPrintf(output)
+}
+
 export {
+  getRandom,
   getTypeSize,
+  getLiteralSize,
   getPointerValueType,
+  getArrayValueType,
   isPointerType,
+  isArrayType,
   dispatchWarning,
   dispathchTable,
-  getLiteralSize,
+  dispatchPrint,
 }

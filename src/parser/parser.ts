@@ -63,8 +63,6 @@ import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { CharStreams, CommonTokenStream } from 'antlr4ts'
-import { getTypeSize } from '../interpreter/helpers'
-import { checkOperator } from '../errors/errors'
 
 class ExpressionGenerator implements CVisitor<cTree.Expression> {
   typeGenerator = new TypeGenerator()
@@ -95,7 +93,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
-  // Functions and variables
+  // Variables and assignments
   visitIdentifier(ctx: IdentifierContext): cTree.Identifier {
     return {
       type: 'Identifier',
@@ -139,6 +137,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
+  // Function Application
   visitFunctionApplication(
     ctx: FunctionApplicationContext
   ): cTree.FunctionApplication {
@@ -287,6 +286,7 @@ class ExpressionGenerator implements CVisitor<cTree.Expression> {
     }
   }
 
+  // -a or !a
   visitUnary(ctx: UnaryContext): cTree.UnaryExpression {
     if (!ctx._operator.text) throw Error("Operator doesn't not exist")
 
@@ -446,6 +446,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
+  // Declarations & initializations
   visitArrayDeclaration(ctx: ArrayDeclarationContext): cTree.ArrayDeclaration {
     return {
       type: 'ArrayDeclaration',
@@ -526,7 +527,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
     }
   }
 
-  // Functions
+  // Function Declaration
   visitFunctionDeclaration(
     ctx: FunctionDeclarationContext
   ): cTree.FunctionDeclaration {
@@ -653,6 +654,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
       args: ctx.expression().map((e) => this.expressionGenerator.visit(e)),
     }
   }
+
   // Loops
   visitBreakStatement(ctx: BreakStatementContext): cTree.BreakStatement {
     return {
@@ -716,9 +718,7 @@ class StatementGenerator implements CVisitor<cTree.Statement> {
 }
 
 function convertProgram(program: ProgramContext): cTree.Program {
-  const generator = new StatementGenerator()
   const functions = program.functionDeclaration()
-  // const body = children?.map((child) => child.accept(generator))
   return {
     type: 'Program',
     functionDeclarations: functions.map((f) =>
@@ -740,6 +740,6 @@ export function parse(source: string) {
     program = convertProgram(tree)
     return program
   } catch (error) {
-    throw error
+    throw Error('Parsing error!')
   }
 }
