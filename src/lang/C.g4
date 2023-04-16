@@ -91,7 +91,7 @@ initializationListPart
 
 initializationList
     : qualifiers=typeQualifiers typeSpecifier initializationListPart
-      (',' initializationListPart)+ ';'
+      (',' initializationListPart)* ';'
     ;
 
 binaryAssignmentOperator

@@ -30,9 +30,10 @@ int main()
 `
 // Find average among numbers in the array
 const test2 = `
-int main() {
+float main() {
     float numbers[100] = {1, 5, 10, 8, 5};
-    float sum = 0.0, avg;
+    float sum = 0.0;
+    float avg;
     int arrSize = sizeof(numbers) / sizeof(float);
 
     for (int i = 0; i < arrSize; ++i) {
@@ -264,7 +265,7 @@ int main()
 {
     char str1[1000] = "madam";
     char str2[1000] = "madan";
-    isPalindrome(str1)
+    isPalindrome(str1);
     isPalindrome(str2);
     return 0;
 }
@@ -315,7 +316,7 @@ int main()
     if(compareStrings(s1, s2)) {
         printf("strings '%s' and '%s' are equal", s1, s2);
     } else {
-        printf("strings '%s' and '%s' are not equal", s1, s2)
+        printf("strings '%s' and '%s' are not equal", s1, s2);
     }
     return 0;
 }`
@@ -366,20 +367,31 @@ int main()
     return findLargest(arr, N);
 }
 `
+
 test('Test 1: merge two arrays ({ 1, 2, 3, 4, 5 } and { 6, 7, 8, 9, 10, 11, 12 })', () => {
+  clearOuput()
+
   const expected = '1 2 3 4 5 6 7 8 9 10 11 12 '
   run(test1)
   const output = getOutput()
   expect(output).toBe(expected)
-  clearOuput()
 })
 
 test('Test 2: find average of array', () => {
-  expect(run(test2)).toBe(5.8)
   clearOuput()
+
+  expect(run(test2)).toBe(5.8)
+})
+
+test('Test 3: find factorial of a number', () => {
+  clearOuput()
+
+  expect(run(test3)).toBe(720)
 })
 
 test('Test 4: char* message printing', () => {
+  clearOuput()
+
   const expected = 'Message is: HELLO'
   run(test4)
   const output = getOutput()
@@ -388,12 +400,15 @@ test('Test 4: char* message printing', () => {
 })
 
 test('Test 5: fun with pointers', () => {
+  clearOuput()
+
   const expected = 1723
   expect(run(test5)).toBe(expected)
-  clearOuput()
 })
 
 test('Test 6: character pyramid', () => {
+  clearOuput()
+
   const expected = `A 
 B B 
 C C C 
@@ -403,60 +418,66 @@ E E E E E
   run(test6)
   const output = getOutput()
   expect(output).toBe(expected)
-  clearOuput()
 })
 
 test('Test 7: swap variables', () => {
+  clearOuput()
+
   const expected = 'After Swapping: x = 112, y = -8'
 
   run(test7)
   const output = getOutput()
   expect(output).toBe(expected)
-  clearOuput()
 })
 
 test('Test 8 : Printing first letter of each word', () => {
-  const expected = 'C J P C I O T'
+  clearOuput()
+
+  const expected = 'C J P C I O T '
 
   run(test8)
   const output = getOutput()
   expect(output).toBe(expected)
-  clearOuput()
 })
 
 test('Test 9: array sorting', () => {
+  clearOuput()
+
   const expected = '-5 9 12 14 23 116 '
 
   run(test9)
   const output = getOutput()
   expect(output).toBe(expected)
-  clearOuput()
 })
 
-// Test 9: printing first letter of each word
 test('Test 10: calculator', () => {
-  const expected = '5.2 / 4.7 = 1.1'
-  run(test9)
-  expect(getOutput()).toBe(expected)
   clearOuput()
+
+  const expected = '5.2 / 4.7 = 1.1'
+  run(test10)
+  expect(getOutput()).toBe(expected)
 })
 
 test('Test 11: check palindromes', () => {
+  clearOuput()
+
   const expected =
     "String 'madam' is Palindrome \n" + "String 'madan' is not a Palindrome \n"
   run(test11)
   expect(getOutput()).toBe(expected)
-  clearOuput()
 })
 
 test('Test 12: compare strings', () => {
-  const expected = "strings 'python' and 'python' are equal"
-  expect(run(test12)).toBe(expected)
   clearOuput()
+
+  const expected = "strings 'python' and 'python' are equal"
+  run(test12)
+  expect(getOutput()).toBe(expected)
 })
 
 test('Test 13: find largest element in the array', () => {
+  clearOuput()
+
   const expected = 139
   expect(run(test13)).toBe(expected)
-  clearOuput()
 })
