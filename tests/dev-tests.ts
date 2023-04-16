@@ -1,7 +1,4 @@
-const { spawn } = require('child_process')
-
 import { run } from '../src/index'
-import { clearOuput, getOutput } from '../src/logger'
 
 // Merge two arrays
 const test1 = `
@@ -30,9 +27,10 @@ int main()
 `
 // Find average among numbers in the array
 const test2 = `
-int main() {
+float main() {
     float numbers[100] = {1, 5, 10, 8, 5};
-    float sum = 0.0, avg;
+    float sum = 0.0;
+    float avg;
     int arrSize = sizeof(numbers) / sizeof(float);
 
     for (int i = 0; i < arrSize; ++i) {
@@ -226,7 +224,7 @@ double main() {
 }
 
 `
-// Check for palindrome word: functiona application, pointer arithmetic, conditionals, strings
+// Check for palindrome word: function application, pointer arithmetic, conditionals, strings
 const test11 = `
 int isPalindrome(char string[])
 {
@@ -264,12 +262,13 @@ int main()
 {
     char str1[1000] = "madam";
     char str2[1000] = "madan";
-    isPalindrome(str1)
+    isPalindrome(str1);
     isPalindrome(str2);
     return 0;
 }
 `
 
+// String comparison: function application, conditionals, pointers, printf
 const test12 = `
 // Function that compares the two string
 void compareStrings(char* x, char* y)
@@ -314,7 +313,7 @@ int main()
     if(compareStrings(s1, s2)) {
         printf("strings '%s' and '%s' are equal", s1, s2);
     } else {
-        printf("strings '%s' and '%s' are not equal", s1, s2)
+        printf("strings '%s' and '%s' are not equal", s1, s2);
     }
     return 0;
 }`
@@ -365,17 +364,55 @@ int main()
     return findLargest(arr, N);
 }
 `
-// console.log(run(test1))
-// run(test1)
-// run(test2)
-// run(test3)
-// run(test4)
-// run(test5)
-// run(test6)
-// run(test7)
-// run(test8)
-// run(test9)
-// run(test10)
-// run(test11)
-run(test12)
-// run(test13)
+let result
+console.log('\n\nTEST 1:')
+result = run(test1)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 2:')
+result = run(test2)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 3:')
+result = run(test3)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 4')
+result = run(test4)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 5:')
+result = run(test5)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 6:')
+result = run(test6)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 7:')
+result = run(test7)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 8:')
+result = run(test8)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 8:')
+result = run(test9)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 10:')
+result = run(test10)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 11:')
+result = run(test11)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 12:')
+result = run(test12)
+if (result) console.log('\nReturn value:', result)
+
+console.log('\n\nTEST 13:')
+result = run(test13)
+if (result) console.log('\nReturn value:', result)
