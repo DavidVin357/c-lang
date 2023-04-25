@@ -10,3 +10,4 @@ It supports the following features of C:
 - Loops: `while`, `for`, `do while`
 - Conditionals: `if else`, `switch case` statements
 - Memory management: pointers, pointers-to-pointers, dynamic memory allocation with `malloc` 
+- IO: `printf`, `print_stack`, `print_heap`
