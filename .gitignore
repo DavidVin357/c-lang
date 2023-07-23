@@ -1,10 +1,8 @@
 node_modules
 additional
 yarn.lock
-dist
 .idea
 C-Lang.iml
 yarn.lock
-!src/lang/C.g4
 .vscode
 tsconfig.tsbuildinfo

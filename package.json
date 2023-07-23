@@ -23,7 +23,7 @@
   },
   "scripts": {
     "antlr4ts": "antlr4ts -visitor src/lang/C.g4",
-    "build": "yarn tsc --build --force",
+    "build": "tsc --build --force",
     "dev": "node --loader ts-node/esm ./src/index.ts",
     "dev-tests": "node --loader ts-node/esm ./tests/dev-tests.ts",
     "test": "jest"
