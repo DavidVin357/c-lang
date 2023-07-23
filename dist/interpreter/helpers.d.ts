@@ -1,0 +1,11 @@
+declare const getRandom: (min: number, max: number) => number;
+declare const getLiteralSize: (val: any) => 4 | 8 | 16;
+declare const getTypeSize: (type?: string) => number;
+declare const isPointerType: (typeSpecifier: any) => boolean;
+declare const isArrayType: (typeSpecifier: any) => boolean;
+declare const getPointerValueType: (type: string) => string;
+declare const getArrayValueType: (type: string) => string;
+declare const dispatchWarning: (message: string) => void;
+declare const dispathchTable: (table: any) => void;
+declare const dispatchPrint: (output: string) => void;
+export { getRandom, getTypeSize, getLiteralSize, getPointerValueType, getArrayValueType, isPointerType, isArrayType, dispatchWarning, dispathchTable, dispatchPrint, };
