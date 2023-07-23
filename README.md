@@ -23,6 +23,7 @@ npm run build
 
 To use the interpreter with [CLang Frontend](https://github.com/DavidVin357/c-frontend), run `npm link`
 
+Alternatively, you can also try out the CLang in its playground at https://DavidVin357.github.io/c-frontend
 # Testing
 
 Run `npm test` to see the execution of the jest tests on samples in `tests/test.ts`
